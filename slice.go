@@ -2,6 +2,7 @@ package slice
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/goava/di"
 )
@@ -53,7 +54,10 @@ func (s *lifecycle) Start() error {
 	if err := s.resolving(); err != nil {
 		return err
 	}
-	s.boot()
+	if err := s.boot(); err != nil {
+		s.shutdown()
+		return err
+	}
 	s.run()
 	s.shutdown()
 	return nil
@@ -100,21 +104,16 @@ func (s *lifecycle) resolving() error {
 	return nil
 }
 
-func (s *lifecycle) boot() {
-	err := errBootFailed{}
+func (s *lifecycle) boot() error {
 	for _, b := range s.bundles {
 		if bs, ok := b.(BootShutdown); ok {
-			if bootErr := bs.Boot(context.TODO(), s.container); bootErr != nil {
-				err = append(err, bootErr)
-				continue
+			if err := bs.Boot(context.TODO(), s.container); err != nil {
+				return fmt.Errorf("boot failed: %s", err)
 			}
 			s.booted = append(s.booted, bs)
 		}
 	}
-	if len(err) > 0 {
-		s.shutdown()
-		s.logger.Fatal(err)
-	}
+	return nil
 }
 
 func (s *lifecycle) run() {
@@ -125,13 +124,10 @@ func (s *lifecycle) run() {
 }
 
 func (s *lifecycle) shutdown() {
-	err := errShutdownFailed{}
-	for _, shutdown := range s.booted {
-		if shutdownErr := shutdown.Shutdown(context.TODO(), s.container); shutdownErr != nil {
-			err = append(err, shutdownErr)
+	for i := len(s.booted) - 1; i >= 0; i-- {
+		shutdown := s.booted[i].Shutdown
+		if err := shutdown(context.TODO(), s.container); err != nil {
+			s.logger.Error(err)
 		}
-	}
-	if len(err) > 0 {
-		s.logger.Error(err)
 	}
 }
