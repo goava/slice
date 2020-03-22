@@ -16,14 +16,14 @@ func TestRegisterBundles(t *testing.T) {
 		ShutdownFunc:            func(ctx context.Context, container Container) error { return nil },
 	}
 
-	s := New(
+	s := newLifecycle(
 		Bundles(bundle),
 	)
 	require.Len(t, s.bundles, 1)
 }
 
 func TestDependencyInjection(t *testing.T) {
-	s := New(
+	s := newLifecycle(
 		DependencyInjection(
 			di.Provide(func() *http.Server { return &http.Server{} }),
 		),

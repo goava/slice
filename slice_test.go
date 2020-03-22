@@ -43,7 +43,7 @@ func TestSlice_Start(t *testing.T) {
 			},
 		}
 
-		s := New(
+		s := newLifecycle(
 			Bundles(
 				&bundle,
 			),
@@ -54,21 +54,21 @@ func TestSlice_Start(t *testing.T) {
 
 		require.Nil(t, s.container)
 		var mux *http.ServeMux
-		s.initialization()
+		require.NoError(t, s.initialization())
 		require.NotNil(t, s.container)
 		require.True(t, s.container.Has(&mux))
 
 		var server *http.Server
 		require.False(t, s.container.Has(&server))
-		s.bundling()
+		require.NoError(t, s.bundling())
 		require.True(t, s.container.Has(&server))
 		require.True(t, s.container.Has(IKernel))
 
-		s.compiling() // todo: check container compilation
+		require.NoError(t, s.compiling()) // todo: check container compilation
 
 		require.Nil(t, s.logger)
 		require.Nil(t, s.kernel)
-		s.resolving()
+		require.NoError(t, s.resolving())
 		require.NotNil(t, s.logger)
 		require.NotNil(t, s.kernel)
 
@@ -85,19 +85,18 @@ func TestSlice_Start(t *testing.T) {
 		require.Len(t, bundle.ShutdownCalls(), 1)
 	})
 	t.Run("undefined kernel causes error", func(t *testing.T) {
-		require.PanicsWithValue(t, "slice.Kernel: not exists in container", func() {
-			New().Start()
-		})
+		require.EqualError(t, newLifecycle().Start(), "slice.Kernel: not exists in container")
 	})
 	t.Run("failed initialization", func(t *testing.T) {
-		s := New(
+		s := newLifecycle(
 			DependencyInjection(
 				di.Provide(nil),
 			),
 		)
-		require.PanicsWithValue(t, "di.Provide(..) failed:\n\t/Users/defval/Development/goava/slice/slice_test.go:95: constructor must be a function like func([dep1, dep2, ...]) (<result>, [cleanup, error]), got nil\n", func() {
-			s.Start()
-		})
+		err := s.Start()
+		require.NotNil(t, err)
+		require.Contains(t, err.Error(), "di.Provide(..) failed:")
+		require.Contains(t, err.Error(), "slice_test.go:93: constructor must be a function like func([dep1, dep2, ...]) (<result>, [cleanup, error]), got nil")
 	})
 	t.Run("failed bundling", func(t *testing.T) {
 		bundle := &BundleMock{
@@ -106,10 +105,10 @@ func TestSlice_Start(t *testing.T) {
 				builder.Provide(nil)
 			},
 		}
-		s := New(
+		s := newLifecycle(
 			Bundles(bundle),
 		)
-		require.PanicsWithValue(t, "*slice.BundleMock: Provide bundle components failed", s.Start)
+		require.EqualError(t, s.Start(), "*slice.BundleMock: Provide bundle components failed")
 	})
 }
 
