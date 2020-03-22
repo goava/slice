@@ -10,6 +10,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func init() {
+	stdLog = errStack{}
+	exitError = func(err error) {
+		panic(err.Error())
+	}
+}
+
 func TestSlice_Start(t *testing.T) {
 	t.Run("lifecycle", func(t *testing.T) {
 		kernel := &KernelMock{
@@ -78,10 +85,31 @@ func TestSlice_Start(t *testing.T) {
 		require.Len(t, bundle.ShutdownCalls(), 1)
 	})
 	t.Run("undefined kernel causes error", func(t *testing.T) {
-		require.PanicsWithValue(t, "fatal: slice.Kernel: not exists in container", func() {
-			stdLog = errStack{}
+		require.PanicsWithValue(t, "slice.Kernel: not exists in container", func() {
 			New().Start()
 		})
+	})
+	t.Run("failed initialization", func(t *testing.T) {
+		s := New(
+			DependencyInjection(
+				di.Provide(nil),
+			),
+		)
+		require.PanicsWithValue(t, "di.Provide(..) failed:\n\t/Users/defval/Development/goava/slice/slice_test.go:95: constructor must be a function like func([dep1, dep2, ...]) (<result>, [cleanup, error]), got nil\n", func() {
+			s.Start()
+		})
+	})
+	t.Run("failed bundling", func(t *testing.T) {
+		bundle := &BundleMock{
+			DependencyInjectionFunc: func(builder ContainerBuilder) {
+				builder.Provide(nil)
+				builder.Provide(nil)
+			},
+		}
+		s := New(
+			Bundles(bundle),
+		)
+		require.PanicsWithValue(t, "*slice.BundleMock: Provide bundle components failed", s.Start)
 	})
 }
 
@@ -102,31 +130,4 @@ func (s errStack) Pop() string {
 		s.stack = s.stack[:len(s.stack)-1]
 	}()
 	return s.stack[len(s.stack)-1]
-}
-
-type TestBundle struct {
-	boot     *bool
-	shutdown *bool
-}
-
-func (s TestBundle) DependencyInjection(builder ContainerBuilder) {
-	builder.Provide(func() *ServerBundleKernel { return &ServerBundleKernel{} }, di.As(IKernel))
-	builder.Provide(func() *http.Server { return &http.Server{} })
-}
-
-func (s TestBundle) Boot(ctx context.Context, container Container) error {
-	*s.boot = true
-	return nil
-}
-
-func (s TestBundle) Shutdown(ctx context.Context, container Container) error {
-	*s.shutdown = true
-	return nil
-}
-
-type ServerBundleKernel struct {
-}
-
-func (s ServerBundleKernel) Run(ctx context.Context) error {
-	return nil
 }

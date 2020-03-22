@@ -25,17 +25,17 @@ type Container interface {
 
 type bundleContainerBuilder struct {
 	container *di.Container
-	errs      provideErrors
+	bundleErr bundleDIErrors
 }
 
 // Has implements ContainerBuilder.
-func (b bundleContainerBuilder) Has(target interface{}, options ...di.ResolveOption) bool {
+func (b *bundleContainerBuilder) Has(target interface{}, options ...di.ResolveOption) bool {
 	return b.container.Has(target, options...)
 }
 
 // Provide implements ContainerBuilder.
-func (b bundleContainerBuilder) Provide(constructor di.Constructor, options ...di.ProvideOption) {
+func (b *bundleContainerBuilder) Provide(constructor di.Constructor, options ...di.ProvideOption) {
 	if err := b.container.Provide(constructor, options...); err != nil {
-		b.errs = append(b.errs, provideError{err})
+		b.bundleErr.list = append(b.bundleErr.list, bundleDIError{err})
 	}
 }

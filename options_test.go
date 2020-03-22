@@ -1,6 +1,7 @@
 package slice
 
 import (
+	"context"
 	"net/http"
 	"testing"
 
@@ -9,10 +10,14 @@ import (
 )
 
 func TestRegisterBundles(t *testing.T) {
+	bundle := &BootShutdownMock{
+		DependencyInjectionFunc: func(builder ContainerBuilder) {},
+		BootFunc:                func(ctx context.Context, container Container) error { return nil },
+		ShutdownFunc:            func(ctx context.Context, container Container) error { return nil },
+	}
+
 	s := New(
-		Bundles(
-			TestBundle{},
-		),
+		Bundles(bundle),
 	)
 	require.Len(t, s.bundles, 1)
 }

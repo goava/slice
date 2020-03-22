@@ -2,8 +2,36 @@ package slice
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 )
+
+type bundleDIErrors struct {
+	bundle interface{}
+	list   []bundleDIError
+}
+
+// Error implements error interface.
+func (p bundleDIErrors) Error() string {
+	hash := map[string]bool{}
+	for i := 0; i < len(p.list); i++ {
+		hash[p.list[i].Error()] = true
+	}
+	var strs []string
+	for k := range hash {
+		strs = append(strs, k)
+	}
+	return fmt.Sprintf("%s: Provide bundle components failed", reflect.TypeOf(p.bundle))
+}
+
+type bundleDIError struct {
+	err error
+}
+
+// Error implements error interface.
+func (p bundleDIError) Error() string {
+	return fmt.Sprintf("%s", p.err)
+}
 
 type errBootFailed []error
 
@@ -21,7 +49,16 @@ func (e errBootFailed) Error() string {
 	for _, err := range e {
 		str = append(str, err.Error())
 	}
-	return fmt.Sprintf("boot failed: %s", strings.Join(str, ", "))
+	return fmt.Sprintf("boot failed:\n %s", strings.Join(str, "\n"))
+}
+
+type errKernelResolveFailed struct {
+	err error
+}
+
+// Error implements error interface.
+func (e errKernelResolveFailed) Error() string {
+	return fmt.Sprintf("kernel resolve failed: %s", e.err)
 }
 
 type errShutdownFailed []error
@@ -40,34 +77,5 @@ func (e errShutdownFailed) Error() string {
 	for _, err := range e {
 		str = append(str, err.Error())
 	}
-	return fmt.Sprintf("shutdown failed: %s", strings.Join(str, ", "))
-}
-
-type errKernelResolveFailed struct {
-	err error
-}
-
-// Error implements error interface.
-func (e errKernelResolveFailed) Error() string {
-	return fmt.Sprintf("kernel resolve failed: %s", e.err)
-}
-
-type provideErrors []provideError
-
-// Error implements error interface.
-func (p provideErrors) Error() string {
-	var str []string
-	for i := 0; len(p) > 0; i++ {
-		str = append(str, p[i].Error())
-	}
-	return strings.Join(str, ", ")
-}
-
-type provideError struct {
-	err error
-}
-
-// Error implements error interface.
-func (p provideError) Error() string {
-	return fmt.Sprintf("provide failed: %s", p.err)
+	return fmt.Sprintf("shutdown failed:\n %s", strings.Join(str, "\n"))
 }

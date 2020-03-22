@@ -4,7 +4,7 @@ import (
 	"context"
 )
 
-//go:generate moq -out bundle_test.go . BootShutdown
+//go:generate moq -out bundle_test.go . Bundle BootShutdown
 
 // Bundle registers reusable set of components.
 type Bundle interface {

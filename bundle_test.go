@@ -9,6 +9,74 @@ import (
 )
 
 var (
+	lockBundleMockDependencyInjection sync.RWMutex
+)
+
+// Ensure, that BundleMock does implement Bundle.
+// If this is not the case, regenerate this file with moq.
+var _ Bundle = &BundleMock{}
+
+// BundleMock is a mock implementation of Bundle.
+//
+//     func TestSomethingThatUsesBundle(t *testing.T) {
+//
+//         // make and configure a mocked Bundle
+//         mockedBundle := &BundleMock{
+//             DependencyInjectionFunc: func(builder ContainerBuilder)  {
+// 	               panic("mock out the DependencyInjection method")
+//             },
+//         }
+//
+//         // use mockedBundle in code that requires Bundle
+//         // and then make assertions.
+//
+//     }
+type BundleMock struct {
+	// DependencyInjectionFunc mocks the DependencyInjection method.
+	DependencyInjectionFunc func(builder ContainerBuilder)
+
+	// calls tracks calls to the methods.
+	calls struct {
+		// DependencyInjection holds details about calls to the DependencyInjection method.
+		DependencyInjection []struct {
+			// Builder is the builder argument value.
+			Builder ContainerBuilder
+		}
+	}
+}
+
+// DependencyInjection calls DependencyInjectionFunc.
+func (mock *BundleMock) DependencyInjection(builder ContainerBuilder) {
+	if mock.DependencyInjectionFunc == nil {
+		panic("BundleMock.DependencyInjectionFunc: method is nil but Bundle.DependencyInjection was just called")
+	}
+	callInfo := struct {
+		Builder ContainerBuilder
+	}{
+		Builder: builder,
+	}
+	lockBundleMockDependencyInjection.Lock()
+	mock.calls.DependencyInjection = append(mock.calls.DependencyInjection, callInfo)
+	lockBundleMockDependencyInjection.Unlock()
+	mock.DependencyInjectionFunc(builder)
+}
+
+// DependencyInjectionCalls gets all the calls that were made to DependencyInjection.
+// Check the length with:
+//     len(mockedBundle.DependencyInjectionCalls())
+func (mock *BundleMock) DependencyInjectionCalls() []struct {
+	Builder ContainerBuilder
+} {
+	var calls []struct {
+		Builder ContainerBuilder
+	}
+	lockBundleMockDependencyInjection.RLock()
+	calls = mock.calls.DependencyInjection
+	lockBundleMockDependencyInjection.RUnlock()
+	return calls
+}
+
+var (
 	lockBootShutdownMockBoot                sync.RWMutex
 	lockBootShutdownMockDependencyInjection sync.RWMutex
 	lockBootShutdownMockShutdown            sync.RWMutex

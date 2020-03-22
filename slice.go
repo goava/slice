@@ -46,24 +46,27 @@ func (s *Slice) initialization() {
 	s.di = append(s.di, di.WithCompile())
 	container, err := di.New(s.di...)
 	if err != nil {
-		fatal(err)
+		exitError(err)
 	}
 	s.container = container
 }
 
 func (s *Slice) bundling() {
 	for _, b := range s.bundles {
-		builder := bundleContainerBuilder{container: s.container}
+		builder := &bundleContainerBuilder{
+			container: s.container,
+			bundleErr: bundleDIErrors{bundle: b},
+		}
 		b.DependencyInjection(builder)
-		if len(builder.errs) > 0 {
-			fatal(builder.errs)
+		if len(builder.bundleErr.list) > 0 {
+			exitError(builder.bundleErr)
 		}
 	}
 }
 
 func (s *Slice) compiling() {
 	if err := s.container.Compile(); err != nil {
-		fatal(err)
+		exitError(err)
 	}
 }
 
@@ -72,7 +75,7 @@ func (s *Slice) resolving() {
 		s.logger = stdLog
 	}
 	if err := s.container.Resolve(&s.kernel); err != nil {
-		s.logger.Fatal(err)
+		exitError(err)
 	}
 }
 
