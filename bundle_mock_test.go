@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	lockBundleMockDependencyInjection sync.RWMutex
+	lockBundleMockBuild sync.RWMutex
 )
 
 // Ensure, that BundleMock does implement Bundle.
@@ -22,8 +22,8 @@ var _ Bundle = &BundleMock{}
 //
 //         // make and configure a mocked Bundle
 //         mockedBundle := &BundleMock{
-//             DependencyInjectionFunc: func(builder ContainerBuilder)  {
-// 	               panic("mock out the DependencyInjection method")
+//             BuildFunc: func(builder ContainerBuilder)  {
+// 	               panic("mock out the Build method")
 //             },
 //         }
 //
@@ -32,54 +32,54 @@ var _ Bundle = &BundleMock{}
 //
 //     }
 type BundleMock struct {
-	// DependencyInjectionFunc mocks the DependencyInjection method.
-	DependencyInjectionFunc func(builder ContainerBuilder)
+	// BuildFunc mocks the Build method.
+	BuildFunc func(builder ContainerBuilder)
 
 	// calls tracks calls to the methods.
 	calls struct {
-		// DependencyInjection holds details about calls to the DependencyInjection method.
-		DependencyInjection []struct {
+		// Build holds details about calls to the Build method.
+		Build []struct {
 			// Builder is the builder argument value.
 			Builder ContainerBuilder
 		}
 	}
 }
 
-// DependencyInjection calls DependencyInjectionFunc.
-func (mock *BundleMock) DependencyInjection(builder ContainerBuilder) {
-	if mock.DependencyInjectionFunc == nil {
-		panic("BundleMock.DependencyInjectionFunc: method is nil but Bundle.DependencyInjection was just called")
+// Build calls BuildFunc.
+func (mock *BundleMock) Build(builder ContainerBuilder) {
+	if mock.BuildFunc == nil {
+		panic("BundleMock.BuildFunc: method is nil but Bundle.Build was just called")
 	}
 	callInfo := struct {
 		Builder ContainerBuilder
 	}{
 		Builder: builder,
 	}
-	lockBundleMockDependencyInjection.Lock()
-	mock.calls.DependencyInjection = append(mock.calls.DependencyInjection, callInfo)
-	lockBundleMockDependencyInjection.Unlock()
-	mock.DependencyInjectionFunc(builder)
+	lockBundleMockBuild.Lock()
+	mock.calls.Build = append(mock.calls.Build, callInfo)
+	lockBundleMockBuild.Unlock()
+	mock.BuildFunc(builder)
 }
 
-// DependencyInjectionCalls gets all the calls that were made to DependencyInjection.
+// BuildCalls gets all the calls that were made to Build.
 // Check the length with:
-//     len(mockedBundle.DependencyInjectionCalls())
-func (mock *BundleMock) DependencyInjectionCalls() []struct {
+//     len(mockedBundle.BuildCalls())
+func (mock *BundleMock) BuildCalls() []struct {
 	Builder ContainerBuilder
 } {
 	var calls []struct {
 		Builder ContainerBuilder
 	}
-	lockBundleMockDependencyInjection.RLock()
-	calls = mock.calls.DependencyInjection
-	lockBundleMockDependencyInjection.RUnlock()
+	lockBundleMockBuild.RLock()
+	calls = mock.calls.Build
+	lockBundleMockBuild.RUnlock()
 	return calls
 }
 
 var (
-	lockBootShutdownMockBoot                sync.RWMutex
-	lockBootShutdownMockDependencyInjection sync.RWMutex
-	lockBootShutdownMockShutdown            sync.RWMutex
+	lockBootShutdownMockBoot     sync.RWMutex
+	lockBootShutdownMockBuild    sync.RWMutex
+	lockBootShutdownMockShutdown sync.RWMutex
 )
 
 // Ensure, that BootShutdownMock does implement BootShutdown.
@@ -95,8 +95,8 @@ var _ BootShutdown = &BootShutdownMock{}
 //             BootFunc: func(ctx context.Context, container Container) error {
 // 	               panic("mock out the Boot method")
 //             },
-//             DependencyInjectionFunc: func(builder ContainerBuilder)  {
-// 	               panic("mock out the DependencyInjection method")
+//             BuildFunc: func(builder ContainerBuilder)  {
+// 	               panic("mock out the Build method")
 //             },
 //             ShutdownFunc: func(ctx context.Context, container Container) error {
 // 	               panic("mock out the Shutdown method")
@@ -111,8 +111,8 @@ type BootShutdownMock struct {
 	// BootFunc mocks the Boot method.
 	BootFunc func(ctx context.Context, container Container) error
 
-	// DependencyInjectionFunc mocks the DependencyInjection method.
-	DependencyInjectionFunc func(builder ContainerBuilder)
+	// BuildFunc mocks the Build method.
+	BuildFunc func(builder ContainerBuilder)
 
 	// ShutdownFunc mocks the Shutdown method.
 	ShutdownFunc func(ctx context.Context, container Container) error
@@ -126,8 +126,8 @@ type BootShutdownMock struct {
 			// Container is the container argument value.
 			Container Container
 		}
-		// DependencyInjection holds details about calls to the DependencyInjection method.
-		DependencyInjection []struct {
+		// Build holds details about calls to the Build method.
+		Build []struct {
 			// Builder is the builder argument value.
 			Builder ContainerBuilder
 		}
@@ -176,34 +176,34 @@ func (mock *BootShutdownMock) BootCalls() []struct {
 	return calls
 }
 
-// DependencyInjection calls DependencyInjectionFunc.
-func (mock *BootShutdownMock) DependencyInjection(builder ContainerBuilder) {
-	if mock.DependencyInjectionFunc == nil {
-		panic("BootShutdownMock.DependencyInjectionFunc: method is nil but BootShutdown.DependencyInjection was just called")
+// Build calls BuildFunc.
+func (mock *BootShutdownMock) Build(builder ContainerBuilder) {
+	if mock.BuildFunc == nil {
+		panic("BootShutdownMock.BuildFunc: method is nil but BootShutdown.Build was just called")
 	}
 	callInfo := struct {
 		Builder ContainerBuilder
 	}{
 		Builder: builder,
 	}
-	lockBootShutdownMockDependencyInjection.Lock()
-	mock.calls.DependencyInjection = append(mock.calls.DependencyInjection, callInfo)
-	lockBootShutdownMockDependencyInjection.Unlock()
-	mock.DependencyInjectionFunc(builder)
+	lockBootShutdownMockBuild.Lock()
+	mock.calls.Build = append(mock.calls.Build, callInfo)
+	lockBootShutdownMockBuild.Unlock()
+	mock.BuildFunc(builder)
 }
 
-// DependencyInjectionCalls gets all the calls that were made to DependencyInjection.
+// BuildCalls gets all the calls that were made to Build.
 // Check the length with:
-//     len(mockedBootShutdown.DependencyInjectionCalls())
-func (mock *BootShutdownMock) DependencyInjectionCalls() []struct {
+//     len(mockedBootShutdown.BuildCalls())
+func (mock *BootShutdownMock) BuildCalls() []struct {
 	Builder ContainerBuilder
 } {
 	var calls []struct {
 		Builder ContainerBuilder
 	}
-	lockBootShutdownMockDependencyInjection.RLock()
-	calls = mock.calls.DependencyInjection
-	lockBootShutdownMockDependencyInjection.RUnlock()
+	lockBootShutdownMockBuild.RLock()
+	calls = mock.calls.Build
+	lockBootShutdownMockBuild.RUnlock()
 	return calls
 }
 

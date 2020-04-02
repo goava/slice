@@ -8,8 +8,8 @@ import (
 
 // Bundle registers reusable set of components.
 type Bundle interface {
-	// DependencyInjection provides bundle components to container builder.
-	DependencyInjection(builder ContainerBuilder)
+	// Build provides bundle components to container builder.
+	Build(builder ContainerBuilder)
 }
 
 // BootShutdown is a bundle that have boot and shutdown stages.

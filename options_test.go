@@ -11,9 +11,9 @@ import (
 
 func TestRegisterBundles(t *testing.T) {
 	bundle := &BootShutdownMock{
-		DependencyInjectionFunc: func(builder ContainerBuilder) {},
-		BootFunc:                func(ctx context.Context, container Container) error { return nil },
-		ShutdownFunc:            func(ctx context.Context, container Container) error { return nil },
+		BuildFunc:    func(builder ContainerBuilder) {},
+		BootFunc:     func(ctx context.Context, container Container) error { return nil },
+		ShutdownFunc: func(ctx context.Context, container Container) error { return nil },
 	}
 
 	s := newLifecycle(
@@ -24,7 +24,7 @@ func TestRegisterBundles(t *testing.T) {
 
 func TestDependencyInjection(t *testing.T) {
 	s := newLifecycle(
-		DependencyInjection(
+		ConfigureContainer(
 			di.Provide(func() *http.Server { return &http.Server{} }),
 		),
 	)

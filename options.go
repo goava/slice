@@ -14,9 +14,9 @@ func Bundles(bundles ...Bundle) Option {
 	})
 }
 
-// DependencyInjection configures the dependency injection container. It saves container options for the compile stage.
+// ConfigureContainer configures the dependency injection container. It saves container options for the compile stage.
 // On compile stage they will be applied on container.
-func DependencyInjection(options ...di.Option) Option {
+func ConfigureContainer(options ...di.Option) Option {
 	return option(func(s *lifecycle) {
 		s.di = append(s.di, options...)
 	})

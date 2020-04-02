@@ -79,7 +79,7 @@ func (s *lifecycle) bundling() error {
 			container: s.container,
 			bundleErr: bundleDIErrors{bundle: b},
 		}
-		b.DependencyInjection(builder)
+		b.Build(builder)
 		if len(builder.bundleErr.list) > 0 {
 			return builder.bundleErr
 		}

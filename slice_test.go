@@ -23,7 +23,7 @@ func TestSlice_Start(t *testing.T) {
 			},
 		}
 		bundle := BootShutdownMock{
-			DependencyInjectionFunc: func(builder ContainerBuilder) {
+			BuildFunc: func(builder ContainerBuilder) {
 				builder.Provide(func(handler http.Handler) *http.Server {
 					return &http.Server{
 						Handler: handler,
@@ -45,7 +45,7 @@ func TestSlice_Start(t *testing.T) {
 			Bundles(
 				&bundle,
 			),
-			DependencyInjection(
+			ConfigureContainer(
 				di.Provide(http.NewServeMux, di.As(new(http.Handler))),
 			),
 		)
@@ -87,7 +87,7 @@ func TestSlice_Start(t *testing.T) {
 	})
 	t.Run("failed initialization", func(t *testing.T) {
 		s := newLifecycle(
-			DependencyInjection(
+			ConfigureContainer(
 				di.Provide(nil),
 			),
 		)
@@ -98,7 +98,7 @@ func TestSlice_Start(t *testing.T) {
 	})
 	t.Run("failed bundling causes start error", func(t *testing.T) {
 		bundle := &BundleMock{
-			DependencyInjectionFunc: func(builder ContainerBuilder) {
+			BuildFunc: func(builder ContainerBuilder) {
 				builder.Provide(nil)
 				builder.Provide(nil)
 			},
@@ -110,7 +110,7 @@ func TestSlice_Start(t *testing.T) {
 	})
 	t.Run("failed compile causes start error", func(t *testing.T) {
 		s := newLifecycle(
-			DependencyInjection(
+			ConfigureContainer(
 				di.Provide(func(s string) *http.ServeMux { return &http.ServeMux{} }),
 			),
 		)
@@ -121,7 +121,7 @@ func TestSlice_Start(t *testing.T) {
 			BootFunc: func(ctx context.Context, container Container) error {
 				return fmt.Errorf("boot shutdown bundle error")
 			},
-			DependencyInjectionFunc: func(builder ContainerBuilder) {
+			BuildFunc: func(builder ContainerBuilder) {
 				builder.Provide(func() *KernelMock {
 					return &KernelMock{RunFunc: func(ctx context.Context) error {
 						return nil
@@ -139,7 +139,7 @@ func TestSlice_Start(t *testing.T) {
 	})
 	t.Run("error on run logs error and shutdown called", func(t *testing.T) {
 		bundle := &BootShutdownMock{
-			DependencyInjectionFunc: func(builder ContainerBuilder) {},
+			BuildFunc: func(builder ContainerBuilder) {},
 			BootFunc: func(ctx context.Context, container Container) error {
 				return nil
 			},
@@ -152,7 +152,7 @@ func TestSlice_Start(t *testing.T) {
 			Bundles(
 				bundle,
 			),
-			DependencyInjection(
+			ConfigureContainer(
 				di.Provide(func() Kernel {
 					return &KernelMock{RunFunc: func(ctx context.Context) error {
 						return errors.New("run error")
@@ -167,7 +167,7 @@ func TestSlice_Start(t *testing.T) {
 	t.Run("shutdown in revers order and logs errors", func(t *testing.T) {
 		var shutdownSeq []string
 		bundle1 := &BootShutdownMock{
-			DependencyInjectionFunc: func(builder ContainerBuilder) {},
+			BuildFunc: func(builder ContainerBuilder) {},
 			BootFunc: func(ctx context.Context, container Container) error {
 				return nil
 			},
@@ -177,7 +177,7 @@ func TestSlice_Start(t *testing.T) {
 			},
 		}
 		bundle2 := &BootShutdownMock{
-			DependencyInjectionFunc: func(builder ContainerBuilder) {},
+			BuildFunc: func(builder ContainerBuilder) {},
 			BootFunc: func(ctx context.Context, container Container) error {
 				return nil
 			},
@@ -187,7 +187,7 @@ func TestSlice_Start(t *testing.T) {
 			},
 		}
 		s := newLifecycle(
-			DependencyInjection(
+			ConfigureContainer(
 				di.Provide(func() Kernel {
 					return &KernelMock{RunFunc: func(ctx context.Context) error {
 						return nil
