@@ -13,6 +13,13 @@ into libraries and frameworks. This is my approach based on
 [interface-based programming](https://en.wikipedia.org/wiki/Interface-based_programming) and 
 [modular programming](https://en.wikipedia.org/wiki/Modular_programming).
 
+## TODO
+
+[ ] Full slice.Logger interface with Debug, Info, Warning, Error and Fatal levels.
+[ ] Bundle configuration.
+
 ## References
 
+- [interface-based programming](https://en.wikipedia.org/wiki/Interface-based_programming)
+- [modular programming](https://en.wikipedia.org/wiki/Modular_programming)
 - [uber-go/fx](https://github.com/uber-go/fx)
