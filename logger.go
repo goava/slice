@@ -5,10 +5,8 @@ import (
 	"os"
 )
 
-var (
-	// this variable need for replace std logger to mock
-	stdLog Logger = stdLogger{}
-)
+// this variable need for replace std logger to mock
+var stdLog Logger = stdLogger{}
 
 // Logger
 type Logger interface {

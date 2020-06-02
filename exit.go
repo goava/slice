@@ -1,7 +1,7 @@
 package slice
 
 import (
-	"fmt"
+	"log"
 	"os"
 )
 
@@ -14,6 +14,6 @@ const logo = ` ______   __       __   ______   ______
 var exitError = defaultExitError
 
 func defaultExitError(err error) {
-	fmt.Println(err.Error())
+	log.Println(err.Error())
 	os.Exit(1)
 }

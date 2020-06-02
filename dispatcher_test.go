@@ -9,29 +9,29 @@ import (
 )
 
 var (
-	lockKernelMockRun sync.RWMutex
+	lockDispatcherMockRun sync.RWMutex
 )
 
-// Ensure, that KernelMock does implement Kernel.
+// Ensure, that DispatcherMock does implement Dispatcher.
 // If this is not the case, regenerate this file with moq.
-var _ Kernel = &KernelMock{}
+var _ Dispatcher = &DispatcherMock{}
 
-// KernelMock is a mock implementation of Kernel.
+// DispatcherMock is a mock implementation of Dispatcher.
 //
-//     func TestSomethingThatUsesKernel(t *testing.T) {
+//     func TestSomethingThatUsesDispatcher(t *testing.T) {
 //
-//         // make and configure a mocked Kernel
-//         mockedKernel := &KernelMock{
+//         // make and configure a mocked Dispatcher
+//         mockedDispatcher := &DispatcherMock{
 //             RunFunc: func(ctx context.Context) error {
 // 	               panic("mock out the Run method")
 //             },
 //         }
 //
-//         // use mockedKernel in code that requires Kernel
+//         // use mockedDispatcher in code that requires Dispatcher
 //         // and then make assertions.
 //
 //     }
-type KernelMock struct {
+type DispatcherMock struct {
 	// RunFunc mocks the Run method.
 	RunFunc func(ctx context.Context) error
 
@@ -46,32 +46,32 @@ type KernelMock struct {
 }
 
 // Run calls RunFunc.
-func (mock *KernelMock) Run(ctx context.Context) error {
+func (mock *DispatcherMock) Run(ctx context.Context) error {
 	if mock.RunFunc == nil {
-		panic("KernelMock.RunFunc: method is nil but Kernel.Run was just called")
+		panic("DispatcherMock.RunFunc: method is nil but Dispatcher.Run was just called")
 	}
 	callInfo := struct {
 		Ctx context.Context
 	}{
 		Ctx: ctx,
 	}
-	lockKernelMockRun.Lock()
+	lockDispatcherMockRun.Lock()
 	mock.calls.Run = append(mock.calls.Run, callInfo)
-	lockKernelMockRun.Unlock()
+	lockDispatcherMockRun.Unlock()
 	return mock.RunFunc(ctx)
 }
 
 // RunCalls gets all the calls that were made to Run.
 // Check the length with:
-//     len(mockedKernel.RunCalls())
-func (mock *KernelMock) RunCalls() []struct {
+//     len(mockedDispatcher.RunCalls())
+func (mock *DispatcherMock) RunCalls() []struct {
 	Ctx context.Context
 } {
 	var calls []struct {
 		Ctx context.Context
 	}
-	lockKernelMockRun.RLock()
+	lockDispatcherMockRun.RLock()
 	calls = mock.calls.Run
-	lockKernelMockRun.RUnlock()
+	lockDispatcherMockRun.RUnlock()
 	return calls
 }

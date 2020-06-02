@@ -16,7 +16,15 @@ into libraries and frameworks. This is my approach based on
 ## TODO
 
 - [ ] Full slice.Logger interface with Debug, Info, Warning, Error and Fatal levels.
-- [ ] Bundle configuration.
+- [x] Bundle configuration.
+
+## Bootstrap
+
+- configure bundles
+- create container
+- build bundle components
+- boot
+- run
 
 ## References
 
