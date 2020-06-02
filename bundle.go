@@ -30,11 +30,11 @@ type BootShutdown interface {
 	Shutdown(ctx context.Context, container Container) error
 }
 
-// A DependOn describe that bundle depends on another bundle.
-type DependOn interface {
+// A Bundles returns necessary bundles.
+type ComplexBundle interface {
 	Bundle
-	// DependOn returns dependent bundle.
-	DependOn() []Bundle
+	// Bundles returns necessary bundle.
+	Bundles() []Bundle
 }
 
 // bundleConfigurator is a function that loads bundle configuration by some way

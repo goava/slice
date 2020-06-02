@@ -47,7 +47,7 @@ type SecondBundle struct {
 
 func (d SecondBundle) Build(builder ContainerBuilder) {}
 
-func (d SecondBundle) DependOn() []Bundle {
+func (d SecondBundle) Bundles() []Bundle {
 	return []Bundle{
 		&FirstBundle{},
 	}
@@ -58,7 +58,7 @@ type ThirdBundle struct {
 
 func (t ThirdBundle) Build(builder ContainerBuilder) {}
 
-func (t ThirdBundle) DependOn() []Bundle {
+func (t ThirdBundle) Bundles() []Bundle {
 	return []Bundle{
 		&SecondBundle{},
 		&FourBundle{},
@@ -70,7 +70,7 @@ type FourBundle struct {
 
 func (t FourBundle) Build(builder ContainerBuilder) {}
 
-func (t FourBundle) DependOn() []Bundle {
+func (t FourBundle) Bundles() []Bundle {
 	return []Bundle{
 		&FirstBundle{},
 	}
@@ -82,7 +82,7 @@ type CycleBundle struct {
 func (c CycleBundle) Build(builder ContainerBuilder) {
 }
 
-func (c CycleBundle) DependOn() []Bundle {
+func (c CycleBundle) Bundles() []Bundle {
 	return []Bundle{
 		&CycleBundle{},
 	}

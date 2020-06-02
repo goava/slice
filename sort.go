@@ -29,14 +29,14 @@ func visit(b Bundle, marks map[reflect.Type]int, sorted *[]Bundle) bool {
 		// acyclic
 		return false
 	}
-	dependOn, ok := b.(DependOn)
+	dependOn, ok := b.(ComplexBundle)
 	if !ok {
 		marks[typ] = permanent
 		*sorted = append(*sorted, b)
 		return true
 	}
 	marks[typ] = temporary
-	deps := dependOn.DependOn()
+	deps := dependOn.Bundles()
 	for _, dep := range deps {
 		if !visit(dep, marks, sorted) {
 			return false
