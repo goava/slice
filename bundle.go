@@ -16,7 +16,7 @@ type Bundle interface {
 }
 
 // BootShutdown is a bundle that have boot and shutdown stages.
-// todo: naming?
+// todo: naming can be changed
 type BootShutdown interface {
 	Bundle
 	// Boot provides way to interact with dependency injection container on the
@@ -31,7 +31,8 @@ type BootShutdown interface {
 }
 
 // A Bundles returns necessary bundles.
-type ComplexBundle interface {
+// todo: naming can be changed
+type ComposedBundle interface {
 	Bundle
 	// Bundles returns necessary bundle.
 	Bundles() []Bundle
