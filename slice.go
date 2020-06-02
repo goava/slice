@@ -35,8 +35,8 @@ func New(options ...Option) *Application {
 	if s.configurator == nil {
 		s.configurator = defaultBundleConfigurator()
 	}
-	if s.timeouts.start == 0 {
-		s.timeouts.start = defaultTimeout
+	if s.timeouts.boot == 0 {
+		s.timeouts.boot = defaultTimeout
 	}
 	if s.timeouts.shutdown == 0 {
 		s.timeouts.shutdown = defaultTimeout
@@ -53,18 +53,18 @@ type Application struct {
 	dispatcher   Dispatcher
 	configurator bundleConfigurator
 	timeouts     struct {
-		start    time.Duration
+		boot     time.Duration
 		shutdown time.Duration
 	}
 }
 
 // Starts start slice.
 func (app *Application) Start() error {
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, stop := context.WithCancel(context.Background())
+	// store context cancel
+	app.stop = stop
 	// add application context
 	app.di = append(app.di, di.Provide(func() context.Context { return ctx }))
-	// save context cancel
-	app.stop = cancel
 	// sort bundles
 	sorted, ok := sortBundles(app.bundles)
 	if !ok {
@@ -93,13 +93,16 @@ func (app *Application) Start() error {
 		// provide std logger to container
 		_ = container.Provide(func() Logger { return app.logger })
 	}
-	// run goroutine with os exit listener
-	go app.waitExit()
+	// run goroutine with os signal catch
+	go app.catchSignals()
+	startCtx, _ := context.WithTimeout(ctx, app.timeouts.boot)
 	// boot bundles
-	shutdowns, err := boot(ctx, container, bundles...)
+	shutdowns, err := boot(startCtx, container, bundles...)
 	// if boot failed shutdown booted bundles
 	if err != nil {
-		if rserr := reverseShutdown(app.timeouts.shutdown, container, shutdowns); rserr != nil {
+		// create context for shutdown
+		shutdownCtx, _ := context.WithTimeout(ctx, app.timeouts.shutdown)
+		if rserr := reverseShutdown(shutdownCtx, container, shutdowns); rserr != nil {
 			return fmt.Errorf("%w (%s)", err, rserr)
 		}
 		return err
@@ -111,22 +114,26 @@ func (app *Application) Start() error {
 		return err
 	}
 	app.logger.Info("Shutdown")
+	// create context for shutdown
+	shutdownCtx, _ := context.WithTimeout(ctx, app.timeouts.shutdown)
 	// shutdown bundles in reverse order
-	if err = reverseShutdown(app.timeouts.shutdown, container, shutdowns); err != nil {
+	if err = reverseShutdown(shutdownCtx, container, shutdowns); err != nil {
 		return fmt.Errorf("%w", err)
 	}
 	return err
 }
 
-func (app *Application) waitExit() {
-	stop := make(chan os.Signal)
-	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
-	sign := <-stop
-	app.logger.Info(strings.Title(sign.String()))
+// Stop stops application.
+func (app *Application) Stop() {
 	app.stop()
 }
 
-// Stop stops application.
-func (app *Application) Stop() {
+// catchSignals waits SIGTERM or SIGINT signals
+func (app *Application) catchSignals() {
+	stop := make(chan os.Signal)
+	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
+	sign := <-stop
+	// todo: intercepted?
+	app.logger.Info(strings.Title(sign.String()))
 	app.stop()
 }

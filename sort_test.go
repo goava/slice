@@ -30,6 +30,7 @@ func Test_sortBundles(t *testing.T) {
 		require.Len(t, result, 4)
 		require.Equal(t, []Bundle{first, second, four, third}, result)
 	})
+
 	t.Run("cycle", func(t *testing.T) {
 		bundles := []Bundle{cycle}
 		_, valid := sortBundles(bundles)

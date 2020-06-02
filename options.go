@@ -28,10 +28,10 @@ func ConfigureContainer(options ...di.Option) Option {
 	})
 }
 
-// StartTimeout sets application start timeout.
-func StartTimeout(timeout time.Duration) Option {
+// BootTimeout sets application boot timeout.
+func BootTimeout(timeout time.Duration) Option {
 	return option(func(s *Application) {
-		s.timeouts.start = timeout
+		s.timeouts.boot = timeout
 	})
 }
 

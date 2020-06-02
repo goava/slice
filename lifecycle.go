@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/goava/di"
 )
@@ -82,9 +81,7 @@ func run(ctx context.Context, container *di.Container) error {
 }
 
 // reverseShutdown shutdowns in reverse order.
-func reverseShutdown(timeout time.Duration, container *di.Container, shutdowns shutdowns) error {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
+func reverseShutdown(ctx context.Context, container *di.Container, shutdowns shutdowns) error {
 	// shutdown bundles in reverse order
 	var errs errShutdown
 	for i := len(shutdowns) - 1; i >= 0; i-- {

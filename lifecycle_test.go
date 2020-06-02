@@ -280,7 +280,8 @@ func TestLifecycle_reverseShutdown(t *testing.T) {
 				},
 			},
 		}
-		err = reverseShutdown(time.Second, c, shutdowns)
+		ctx, _ := context.WithTimeout(context.Background(), time.Second)
+		err = reverseShutdown(ctx, c, shutdowns)
 		require.NoError(t, err)
 		require.Equal(t, []string{"third-shutdown", "second-shutdown", "first-shutdown"}, order)
 	})
@@ -309,7 +310,8 @@ func TestLifecycle_reverseShutdown(t *testing.T) {
 				},
 			},
 		}
-		err = reverseShutdown(time.Second, c, shutdowns)
+		ctx, _ := context.WithTimeout(context.Background(), time.Second)
+		err = reverseShutdown(ctx, c, shutdowns)
 		require.EqualError(t, err, "shutdown failed: shutdown third-shutdown failed: third-error; shutdown second-shutdown failed: second-error; shutdown first-shutdown failed: first-error")
 	})
 
@@ -338,7 +340,8 @@ func TestLifecycle_reverseShutdown(t *testing.T) {
 				},
 			},
 		}
-		err = reverseShutdown(time.Nanosecond, c, shutdowns)
+		ctx, _ := context.WithTimeout(context.Background(), time.Nanosecond)
+		err = reverseShutdown(ctx, c, shutdowns)
 		require.EqualError(t, err, "shutdown failed: context deadline exceeded")
 	})
 }
