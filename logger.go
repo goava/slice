@@ -10,11 +10,17 @@ var stdLog Logger = stdLogger{}
 
 // Logger
 type Logger interface {
+	Info(format string, values ...interface{})
 	Error(err error)
 	Fatal(err error)
 }
 
 type stdLogger struct {
+}
+
+// Info logs message with info level.
+func (s stdLogger) Info(format string, values ...interface{}) {
+	log.Printf(format, values...)
 }
 
 func (s stdLogger) Fatal(err error) {

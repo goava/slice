@@ -21,9 +21,7 @@ func TestBundleContainerBuilder_Has(t *testing.T) {
 
 func TestBundleContainerBuilder_Provide(t *testing.T) {
 	t.Run("builder provide component to container", func(t *testing.T) {
-		c, err := di.New(
-			di.WithCompile(),
-		)
+		c, err := di.New()
 		require.NoError(t, err)
 		require.NotNil(t, c)
 		cb := containerBuilder{container: c}
@@ -34,9 +32,7 @@ func TestBundleContainerBuilder_Provide(t *testing.T) {
 	})
 
 	t.Run("if provide error builder saves error", func(t *testing.T) {
-		c, err := di.New(
-			di.WithCompile(),
-		)
+		c, err := di.New()
 		require.NoError(t, err)
 		require.NotNil(t, c)
 		cb := containerBuilder{container: c}
@@ -44,5 +40,18 @@ func TestBundleContainerBuilder_Provide(t *testing.T) {
 		require.Len(t, cb.errs, 1)
 		require.Error(t, cb.Error())
 		require.Contains(t, cb.Error().Error(), "invalid constructor signature, got func()")
+	})
+}
+
+func TestInspectBundles(t *testing.T) {
+	t.Run("name", func(t *testing.T) {
+		bundles := []Bundle{
+			FirstBundle{},
+			SecondBundle{},
+		}
+		inspected := inspectBundles(bundles...)
+		for _, entry := range inspected {
+			require.Equal(t, entry.name, bundleName(entry.Bundle))
+		}
 	})
 }

@@ -14,7 +14,7 @@ import (
 func configureBundles(configure bundleConfigurator, bundles ...bundle) error {
 	for _, bundle := range bundles {
 		if err := configure(bundle); err != nil {
-			return fmt.Errorf("configure %s bundle failed: %s", bundle.name, err)
+			return fmt.Errorf("configure %s bundle failed: %w", bundle.name, err)
 		}
 	}
 	return nil
@@ -26,7 +26,7 @@ func createContainer(diopts ...di.Option) (*di.Container, error) {
 	// create container and validate user dependency injection options
 	container, err := di.New(diopts...)
 	if err != nil {
-		return nil, fmt.Errorf("create container failed: %s", err)
+		return nil, fmt.Errorf("create container failed: %w", err)
 	}
 	return container, nil
 }
@@ -38,7 +38,7 @@ func buildBundles(container *di.Container, bundles ...bundle) error {
 		builder := newContainerBuilder(container)
 		bundle.Build(builder)
 		if err := builder.Error(); err != nil {
-			return fmt.Errorf("build %s bundle failed: %s", bundle.name, err)
+			return fmt.Errorf("build %s bundle failed: %w", bundle.name, err)
 		}
 	}
 	return nil
@@ -50,12 +50,12 @@ func buildBundles(container *di.Container, bundles ...bundle) error {
 func boot(ctx context.Context, container *di.Container, bundles ...bundle) (shutdowns shutdowns, _ error) {
 	for _, bundle := range bundles {
 		if err := ctx.Err(); err != nil {
-			return shutdowns, fmt.Errorf("boot %s bundle failed: %s", bundle.name, err)
+			return shutdowns, fmt.Errorf("boot %s bundle failed: %w", bundle.name, err)
 		}
 		if boot, ok := bundle.Bundle.(BootShutdown); ok {
 			// boot bundle
 			if err := boot.Boot(ctx, container); err != nil {
-				return shutdowns, fmt.Errorf("boot %s bundle failed: %s", bundle.name, err)
+				return shutdowns, fmt.Errorf("boot %s bundle failed: %w", bundle.name, err)
 			}
 			// append successfully booted bundle shutdown
 			shutdowns = append(shutdowns, bundleShutdown{
@@ -72,11 +72,11 @@ func run(ctx context.Context, container *di.Container) error {
 	// resolve dispatcher
 	var dispatcher Dispatcher
 	if err := container.Resolve(&dispatcher); err != nil {
-		return fmt.Errorf("resolve dispatcher failed: %s", err)
+		return fmt.Errorf("resolve dispatcher failed: %w", err)
 	}
 	// dispatcher run
 	if err := dispatcher.Run(ctx); err != nil {
-		return fmt.Errorf("failure: %s", err)
+		return fmt.Errorf("failure: %w", err)
 	}
 	return nil
 }
@@ -91,14 +91,14 @@ func reverseShutdown(timeout time.Duration, container *di.Container, shutdowns s
 		// bundle shutdown
 		bs := shutdowns[i]
 		if err := ctx.Err(); err != nil {
-			return fmt.Errorf("shutdown failed: %s", err)
+			return fmt.Errorf("shutdown failed: %w", err)
 		}
 		if err := bs.shutdown(ctx, container); err != nil {
-			errs = append(errs, fmt.Errorf("shutdown %s failed: %s", bs.name, err))
+			errs = append(errs, fmt.Errorf("shutdown %s failed: %w", bs.name, err))
 		}
 	}
 	if len(errs) != 0 {
-		return fmt.Errorf("shutdown failed: %s", errs)
+		return fmt.Errorf("shutdown failed: %w", errs)
 	}
 	return nil
 }
