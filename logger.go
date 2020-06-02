@@ -24,10 +24,10 @@ func (s stdLogger) Info(format string, values ...interface{}) {
 }
 
 func (s stdLogger) Fatal(err error) {
-	log.Print("Fatal:", err.Error())
+	log.Print("Fatal: ", err.Error())
 	os.Exit(1)
 }
 
 func (s stdLogger) Error(err error) {
-	log.Print("Error:", err.Error())
+	log.Print("Error: ", err.Error())
 }

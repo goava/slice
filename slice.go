@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -59,7 +60,7 @@ type Application struct {
 
 // Starts start slice.
 func (app *Application) Start() error {
-	ctx, cancel := context.WithTimeout(context.Background(), app.timeouts.start)
+	ctx, cancel := context.WithCancel(context.Background())
 	// add application context
 	app.di = append(app.di, di.Provide(func() context.Context { return ctx }))
 	// save context cancel
@@ -120,7 +121,8 @@ func (app *Application) Start() error {
 func (app *Application) waitExit() {
 	stop := make(chan os.Signal)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
-	<-stop
+	sign := <-stop
+	app.logger.Info(strings.Title(sign.String()))
 	app.stop()
 }
 
