@@ -33,11 +33,11 @@ type ContainerBuilder interface {
 // Container is a dependency injection container.
 type Container interface {
 	// Has checks that type exists in container, if not it return false.
-	Has(target interface{}, options ...di.ResolveOption) bool
+	Has(target di.Pointer, options ...di.ResolveOption) bool
 	// Invoke calls provided function.
 	Invoke(fn di.Invocation, options ...di.InvokeOption) error
 	// Resolve builds instance of target type and fills target pointer.
-	Resolve(into interface{}, options ...di.ResolveOption) error
+	Resolve(into di.Pointer, options ...di.ResolveOption) error
 }
 
 // newContainerBuilder creates container builder for bundle.
