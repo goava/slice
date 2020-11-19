@@ -82,22 +82,28 @@ func run(ctx context.Context, container *di.Container) error {
 
 // reverseShutdown shutdowns in reverse order.
 func reverseShutdown(ctx context.Context, container *di.Container, shutdowns shutdowns) error {
-	// shutdown bundles in reverse order
+	done := make(chan struct{})
 	var errs errShutdown
-	for i := len(shutdowns) - 1; i >= 0; i-- {
-		// bundle shutdown
-		bs := shutdowns[i]
-		if err := ctx.Err(); err != nil {
-			return fmt.Errorf("shutdown failed: %w", err)
+	go func() {
+		// shutdown bundles in reverse order
+		for i := len(shutdowns) - 1; i >= 0; i-- {
+			// bundle shutdown
+			bs := shutdowns[i]
+			if err := bs.shutdown(ctx, container); err != nil {
+				errs = append(errs, fmt.Errorf("shutdown %s failed: %w", bs.name, err))
+			}
 		}
-		if err := bs.shutdown(ctx, container); err != nil {
-			errs = append(errs, fmt.Errorf("shutdown %s failed: %w", bs.name, err))
+		done <- struct{}{}
+	}()
+	select {
+	case <-ctx.Done():
+		return fmt.Errorf("shutdown failed: %w", ctx.Err())
+	case <-done:
+		if len(errs) != 0 {
+			return fmt.Errorf("shutdown failed: %w", errs)
 		}
+		return nil
 	}
-	if len(errs) != 0 {
-		return fmt.Errorf("shutdown failed: %w", errs)
-	}
-	return nil
 }
 
 type bundleShutdown struct {
