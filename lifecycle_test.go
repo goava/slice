@@ -50,7 +50,7 @@ func TestLifecycle_configureBundles(t *testing.T) {
 		}
 		i := 0
 		err := configureBundles(func(bundle Bundle) error {
-			require.Equal(t, bundles[i], bundle)
+			require.Equal(t, bundles[i].Bundle, bundle)
 			i++
 			return nil
 		}, bundles...)

@@ -11,7 +11,7 @@ import (
 // ContainerBuilder provides container instance that squash bundle errors.
 type ContainerBuilder interface {
 	// Has checks that type exists in container, if not it is return false.
-	Has(target interface{}, options ...di.ResolveOption) bool
+	Has(target interface{}, options ...di.ResolveOption) (bool, error)
 	// Provide provides a reliable way of component building to the container.
 	// The constructor will be invoked lazily on-demand. For more information about
 	// constructors see Constructor interface. ProvideOption can add additional
@@ -33,7 +33,7 @@ type ContainerBuilder interface {
 // Container is a dependency injection container.
 type Container interface {
 	// Has checks that type exists in container, if not it return false.
-	Has(target di.Pointer, options ...di.ResolveOption) bool
+	Has(target di.Pointer, options ...di.ResolveOption) (bool, error)
 	// Invoke calls provided function.
 	Invoke(fn di.Invocation, options ...di.InvokeOption) error
 	// Resolve builds instance of target type and fills target pointer.
@@ -54,7 +54,7 @@ type containerBuilder struct {
 }
 
 // Has implements ContainerBuilder.
-func (b *containerBuilder) Has(target interface{}, options ...di.ResolveOption) bool {
+func (b *containerBuilder) Has(target interface{}, options ...di.ResolveOption) (bool, error) {
 	return b.container.Has(target, options...)
 }
 

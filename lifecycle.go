@@ -12,7 +12,7 @@ import (
 // loads configuration via bundleConfigurator
 func configureBundles(configure bundleConfigurator, bundles ...bundle) error {
 	for _, bundle := range bundles {
-		if err := configure(bundle); err != nil {
+		if err := configure(bundle.Bundle); err != nil {
 			return fmt.Errorf("configure %s bundle failed: %w", bundle.name, err)
 		}
 	}

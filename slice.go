@@ -32,6 +32,15 @@ func New(options ...Option) *Application {
 	for _, opt := range options {
 		opt.apply(&s)
 	}
+	// lookup application name from environment
+	if name, ok := lookupEnv("APP_NAME"); ok {
+		s.info.Name = name
+	}
+	env, _ := lookupEnv("APP_ENV")
+	s.info.Env = parseEnv(env)
+	if debug, ok := lookupEnv("APP_DEBUG"); ok {
+		s.info.Debug = strings.ToLower(debug) == "true"
+	}
 	if s.configurator == nil {
 		s.configurator = defaultBundleConfigurator()
 	}
@@ -56,15 +65,21 @@ type Application struct {
 		boot     time.Duration
 		shutdown time.Duration
 	}
+	info *Info
 }
 
 // Starts start slice.
 func (app *Application) Start() error {
+	app.logger = &stdLogger{}
+	if app.info == nil || app.info.Name == "" {
+		return fmt.Errorf("application name must be specified, see slice.SetName() option")
+	}
 	ctx, stop := context.WithCancel(context.Background())
 	// store context cancel
 	app.stop = stop
 	// add application context
-	app.di = append(app.di, di.Provide(func() context.Context { return ctx }))
+	app.di = append(app.di, di.Provide(func() *Context { return NewContext(ctx) }, di.As(new(context.Context))))
+	app.di = append(app.di, di.Provide(func() Info { return *app.info }))
 	// sort bundles
 	sorted, ok := sortBundles(app.bundles)
 	if !ok {
@@ -85,15 +100,10 @@ func (app *Application) Start() error {
 	if err := buildBundles(container, bundles...); err != nil {
 		return err
 	}
-	// resolve logger
+	// resolve logger from container
+	// if logger not found it will remain std
 	_ = container.Resolve(&app.logger)
-	// if logger not provided use std logger
-	if app.logger == nil {
-		app.logger = &stdLogger{}
-		// provide std logger to container
-		_ = container.Provide(func() Logger { return app.logger })
-	}
-	// run goroutine with os signal catch
+	// start goroutine with os signal catch
 	go app.catchSignals()
 	startCtx, _ := context.WithTimeout(ctx, app.timeouts.boot)
 	// boot bundles
@@ -107,13 +117,13 @@ func (app *Application) Start() error {
 		}
 		return err
 	}
-	app.logger.Info("Start")
+	app.logger.Printf("Start")
 	// run application, ignore context cancel error
 	// default context lifecycle used for application shutdown
 	if err := run(ctx, container); err != nil && !errors.Is(err, context.Canceled) {
 		return err
 	}
-	app.logger.Info("Shutdown")
+	app.logger.Printf("Shutdown")
 	// create context for shutdown
 	shutdownCtx, _ := context.WithTimeout(ctx, app.timeouts.shutdown)
 	// shutdown bundles in reverse order
@@ -134,6 +144,6 @@ func (app *Application) catchSignals() {
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
 	sign := <-stop
 	// todo: intercepted?
-	app.logger.Info(strings.Title(sign.String()))
+	app.logger.Printf(strings.Title(sign.String()))
 	app.stop()
 }

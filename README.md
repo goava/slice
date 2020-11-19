@@ -26,6 +26,11 @@ into libraries and frameworks. This is my approach based on
 - boot
 - run
 
+## Env
+
+- `APP_NAME` - name
+- `APP_ENV` - environment
+
 ## References
 
 - [interface-based programming](https://en.wikipedia.org/wiki/Interface-based_programming)
