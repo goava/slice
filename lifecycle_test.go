@@ -325,7 +325,7 @@ func TestLifecycle_reverseShutdown(t *testing.T) {
 			{
 				name: "first-shutdown",
 				shutdown: func(ctx context.Context, container Container) error {
-					time.Sleep(time.Millisecond)
+					time.Sleep(time.Hour)
 					return nil
 				},
 			},

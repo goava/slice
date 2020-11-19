@@ -145,7 +145,6 @@ func (app *Application) catchSignals() {
 	stop := make(chan os.Signal)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
 	sign := <-stop
-	// todo: intercepted?
 	app.logger.Printf(strings.Title(sign.String()))
 	app.stop()
 }
