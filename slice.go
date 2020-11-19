@@ -113,7 +113,7 @@ func (app *Application) Start() error {
 	// if boot failed shutdown booted bundles
 	if err != nil {
 		// create context for shutdown
-		shutdownCtx, _ := context.WithTimeout(ctx, app.timeouts.shutdown)
+		shutdownCtx, _ := context.WithTimeout(context.Background(), app.timeouts.shutdown)
 		if rserr := reverseShutdown(shutdownCtx, container, shutdowns); rserr != nil {
 			return fmt.Errorf("%w (%s)", err, rserr)
 		}
@@ -127,7 +127,7 @@ func (app *Application) Start() error {
 	}
 	app.logger.Printf("Shutdown")
 	// create context for shutdown
-	shutdownCtx, _ := context.WithTimeout(ctx, app.timeouts.shutdown)
+	shutdownCtx, _ := context.WithTimeout(context.Background(), app.timeouts.shutdown)
 	// shutdown bundles in reverse order
 	if err = reverseShutdown(shutdownCtx, container, shutdowns); err != nil {
 		return fmt.Errorf("%w", err)
