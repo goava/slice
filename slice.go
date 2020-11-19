@@ -28,7 +28,9 @@ func Run(options ...Option) {
 
 // New creates slice application with provided options.
 func New(options ...Option) *Application {
-	s := Application{}
+	s := Application{
+		info: &Info{},
+	}
 	for _, opt := range options {
 		opt.apply(&s)
 	}

@@ -14,9 +14,13 @@ func TestBundleContainerBuilder_Has(t *testing.T) {
 	require.NotNil(t, c)
 	cb := containerBuilder{container: c}
 	var mux *http.ServeMux
-	require.True(t, cb.Has(&mux))
+	has, err := cb.Has(&mux)
+	require.NoError(t, err)
+	require.True(t, has)
 	var server *http.Server
-	require.False(t, cb.Has(&server))
+	has, err = cb.Has(&server)
+	require.NoError(t, err)
+	require.False(t, has)
 }
 
 func TestBundleContainerBuilder_Provide(t *testing.T) {
@@ -28,7 +32,9 @@ func TestBundleContainerBuilder_Provide(t *testing.T) {
 		cb.Provide(func() *http.Server { return &http.Server{} })
 		require.Len(t, cb.errs, 0)
 		var server *http.Server
-		require.True(t, cb.Has(&server))
+		has, err := cb.Has(&server)
+		require.NoError(t, err)
+		require.True(t, has)
 	})
 
 	t.Run("if provide error builder saves error", func(t *testing.T) {

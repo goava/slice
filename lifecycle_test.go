@@ -18,7 +18,9 @@ func TestLifecycle_initialization(t *testing.T) {
 		)
 		require.NoError(t, err)
 		var mux *http.ServeMux
-		require.True(t, c.Has(&mux))
+		has, err := c.Has(&mux)
+		require.NoError(t, err)
+		require.True(t, has)
 	})
 
 	t.Run("incorrect option cause error", func(t *testing.T) {
