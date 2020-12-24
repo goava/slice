@@ -74,11 +74,12 @@ func (app *Application) Start() error {
 	if app.info == nil || app.info.Name == "" {
 		return fmt.Errorf("application name must be specified, see slice.SetName() option")
 	}
-	ctx, stop := context.WithCancel(context.Background())
+	base, stop := context.WithCancel(context.Background())
+	ctx := NewContext(base)
 	// store context cancel
 	app.stop = stop
 	// add application context
-	app.di = append(app.di, di.Provide(func() *Context { return NewContext(ctx) }, di.As(new(context.Context))))
+	app.di = append(app.di, di.Provide(func() *Context { return ctx }, di.As(new(context.Context))))
 	app.di = append(app.di, di.Provide(func() Info { return *app.info }))
 	// sort bundles
 	sorted, ok := sortBundles(app.bundles)
