@@ -12,6 +12,8 @@ github.com/goava/di v1.4.2-0.20201116224617-a144a2d448c4 h1:hBKx6n8vGkVXp9mJPtNm
 github.com/goava/di v1.4.2-0.20201116224617-a144a2d448c4/go.mod h1:ToepvYlpTdC7DrFggmv/TyKIuezBLvAXlRxJkOvtemo=
 github.com/goava/di v1.5.0 h1:POTv3Z75wVq6UGS8461vhhPFAcc7qJj9ETSHQpPyCbI=
 github.com/goava/di v1.5.0/go.mod h1:ToepvYlpTdC7DrFggmv/TyKIuezBLvAXlRxJkOvtemo=
+github.com/goava/di v1.6.1 h1:F7Wqiln8SRYYvHBxHExSLyVuuf1BAG6o36ntsfrdmb4=
+github.com/goava/di v1.6.1/go.mod h1:ToepvYlpTdC7DrFggmv/TyKIuezBLvAXlRxJkOvtemo=
 github.com/kelseyhightower/envconfig v1.4.0 h1:Im6hONhd3pLkfDFsbRgu68RDNkGF1r3dvMUtDTo2cv8=
 github.com/kelseyhightower/envconfig v1.4.0/go.mod h1:cccZRl6mQpaq41TPp5QxidR+Sa3axMbJDNb//FQX6Gg=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
