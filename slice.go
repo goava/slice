@@ -16,6 +16,8 @@ import (
 const (
 	// default start/shutdown timeout
 	defaultTimeout = 5 * time.Second
+	defaultEnv     = "ENV"
+	defaultDebug   = "DEBUG"
 )
 
 // Run creates and runs application with default shutdown flow (SIGTERM, SIGINT).
@@ -34,13 +36,9 @@ func New(options ...Option) *Application {
 	for _, opt := range options {
 		opt.apply(&s)
 	}
-	// lookup application name from environment
-	if name, ok := lookupEnv("APP_NAME"); ok {
-		s.info.Name = name
-	}
-	env, _ := lookupEnv("APP_ENV")
+	env, _ := lookupEnv(defaultEnv)
 	s.info.Env = parseEnv(env)
-	if debug, ok := lookupEnv("APP_DEBUG"); ok {
+	if debug, ok := lookupEnv(defaultDebug); ok {
 		s.info.Debug = strings.ToLower(debug) == "true"
 	}
 	if s.configurator == nil {
