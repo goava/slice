@@ -24,14 +24,19 @@ package main
 import (
 	"github.com/goava/slice"
 	"github.com/goava/di"
+	// imports omitted
 )
 
 func main() {
 	slice.Run(
+		slice.RegisterBundles(
+			logging.Bundle(),
+			monitoring.Bundle(),
+		    grpc.Bundle(),
+		),
 		slice.ConfigureContainer(
 			di.Provide(NewDispatcher, di.As(new(slice.Dispatcher))),
-			di.Provide(NewServer),
-			di.Provide(NewMux),
+			di.Provide(grpcsrv.NewService, di.As(new(grpc.Service))),
 		),
 	)
 }
