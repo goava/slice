@@ -29,6 +29,7 @@ import (
 
 func main() {
 	slice.Run(
+		slice.SetName("grpc-service"),
 		slice.RegisterBundles(
 			logging.Bundle(),
 			monitoring.Bundle(),
