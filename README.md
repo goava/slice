@@ -32,7 +32,7 @@ func main() {
 		slice.RegisterBundles(
 			logging.Bundle(),
 			monitoring.Bundle(),
-		    grpc.Bundle(),
+			grpc.Bundle(),
 		),
 		slice.ConfigureContainer(
 			di.Provide(NewDispatcher, di.As(new(slice.Dispatcher))),
