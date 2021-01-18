@@ -10,17 +10,11 @@ Slice (Work in progress)
 
 During the process of writing software in the team, you develop a
 certain style and define standards that meet the requirements for this
-software. These standards grow into libraries and frameworks. This is my
+software. These standards grow into libraries and frameworks. This is our
 approach based on
 [interface-based programming](https://en.wikipedia.org/wiki/Interface-based_programming)
 and
 [modular programming](https://en.wikipedia.org/wiki/Modular_programming).
-
-## TODO
-
-- [X] Environment bundle configuration
-- [ ] Configuration abstraction
-- [ ] 90+% test coverage
 
 ## Configuration
 
@@ -41,6 +35,14 @@ slice.Run(
 
 The application environment. Use environment variable `ENV` to specify
 application environment. The value can be any string.
+
+## TODO
+
+- [X] Environment bundle configuration
+- [ ] Configuration abstraction
+- [ ] 90+% test coverage
+- [ ] Bundle registry
+- [ ] Registry interface
 
 ## References
 
