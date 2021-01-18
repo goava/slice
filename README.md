@@ -16,6 +16,27 @@ approach based on
 and
 [modular programming](https://en.wikipedia.org/wiki/Modular_programming).
 
+## Overview
+
+```go
+package main
+
+import (
+	"github.com/goava/slice"
+	"github.com/goava/di"
+)
+
+func main() {
+	slice.Run(
+		slice.ConfigureContainer(
+			di.Provide(NewDispatcher, di.As(new(slice.Dispatcher))),
+			di.Provide(NewServer),
+			di.Provide(NewMux),
+		),
+	)
+}
+```
+
 ## Configuration
 
 ##### NAME
