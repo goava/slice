@@ -29,13 +29,13 @@ import (
 
 func main() {
 	slice.Run(
-		slice.SetName("grpc-service"),
-		slice.RegisterBundles(
-			logging.Bundle(),
-			monitoring.Bundle(),
-			grpc.Bundle(),
+		slice.WithName("grpc-service"),
+		slice.WithBundles(
+			logging.Bundle,
+			monitoring.Bundle,
+			grpc.Bundle,
 		),
-		slice.ConfigureContainer(
+		slice.WithComponents(
 			di.Provide(NewDispatcher, di.As(new(slice.Dispatcher))),
 			di.Provide(grpcsrv.NewService, di.As(new(grpc.Service))),
 		),
@@ -48,12 +48,12 @@ func main() {
 ##### NAME
 
 
-The name of application. Use `slice.SetName("your name")` to specify the
+The name of application. Use `slice.WithName("your name")` to specify the
 application name.
 
 ```go
 slice.Run(
-    slice.SetName("sliced"),
+    slice.WithName("sliced"),
     // ...
 )
 ```
@@ -66,10 +66,12 @@ application environment. The value can be any string.
 ## TODO
 
 - [X] Environment bundle configuration
-- [ ] Configuration abstraction
+- [x] Configuration abstraction
+- [ ] Batch update
+- [ ] Replace `envconfig` to `parameter`
+- [ ] Another parameter source (file, vault, consul).
 - [ ] 90+% test coverage
 - [ ] Bundle registry
-- [ ] Registry interface
 
 ## References
 
