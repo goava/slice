@@ -8,17 +8,6 @@ import (
 	"github.com/goava/di"
 )
 
-// configureBundles is a step of application bootstrap. It iterates over all registered bundles and
-// loads configuration via bundleConfigurator
-func configureBundles(configure bundleConfigurator, bundles ...bundle) error {
-	for _, bundle := range bundles {
-		if err := configure(bundle.Bundle); err != nil {
-			return fmt.Errorf("configure %s bundle failed: %w", bundle.name, err)
-		}
-	}
-	return nil
-}
-
 // createContainer is a step of application bootstrap. It collects user dependency injection
 // options and creates container with them. Invalid dependency injection option will cause error.
 func createContainer(diopts ...di.Option) (*di.Container, error) {
@@ -32,38 +21,36 @@ func createContainer(diopts ...di.Option) (*di.Container, error) {
 
 // buildBundles is a step of application bootstrap. It iterates over all registered bundles and
 // builds their dependencies. Build errors will be combined into one by containerBuilder.
-func buildBundles(container *di.Container, bundles ...bundle) error {
+func buildBundles(container *di.Container, bundles ...Bundle) error {
 	for _, bundle := range bundles {
-		builder := newContainerBuilder(container)
-		bundle.Build(builder)
-		if err := builder.Error(); err != nil {
-			return fmt.Errorf("build %s bundle failed: %w", bundle.name, err)
+		if err := container.Apply(bundle.Components...); err != nil {
+			return fmt.Errorf("build %s bundle failed: %w", bundle.Name, err)
 		}
 	}
 	return nil
 }
 
-// boot is a step of application bootstrap. It iterates over all registered bundles and call their Boot()
+// before is a step of application bootstrap. It iterates over all registered bundles and call their Boot()
 // method. If bundle boot are success shutdown function will be returned in shutdowns. In case, that boot
 // failed process of booting application will be stopped.
-func boot(ctx context.Context, container *di.Container, bundles ...bundle) (shutdowns shutdowns, _ error) {
+func before(ctx context.Context, container *di.Container, bundles ...Bundle) (after []hook, _ error) {
 	for _, bundle := range bundles {
 		if err := ctx.Err(); err != nil {
-			return shutdowns, fmt.Errorf("boot %s bundle failed: %w", bundle.name, err)
+			return after, fmt.Errorf("boot %s bundle failed: %w", bundle.Name, err)
 		}
-		if boot, ok := bundle.Bundle.(BootShutdown); ok {
-			// boot bundle
-			if err := boot.Boot(ctx, container); err != nil {
-				return shutdowns, fmt.Errorf("boot %s bundle failed: %w", bundle.name, err)
+		for _, h := range bundle.Hooks {
+			if err := container.Invoke(h.Before); err != nil {
+				return nil, fmt.Errorf("boot %s bundle failed: %w", bundle.Name, err)
 			}
-			// append successfully booted bundle shutdown
-			shutdowns = append(shutdowns, bundleShutdown{
-				name:     bundle.name,
-				shutdown: boot.Shutdown,
-			})
+			if h.After != nil {
+				after = append(after, hook{
+					name: bundle.Name,
+					hook: h.After,
+				})
+			}
 		}
 	}
-	return shutdowns, nil
+	return after, nil
 }
 
 // run is a part of application lifecycle. It resolves application dispatcher via container and call Run() method.
@@ -71,7 +58,7 @@ func run(ctx context.Context, container *di.Container) error {
 	// resolve dispatcher
 	var dispatcher Dispatcher
 	if err := container.Resolve(&dispatcher); err != nil {
-		return fmt.Errorf("resolve dispatcher failed: %w", err)
+		return fmt.Errorf("resolve Dispatcher failed: %w", err)
 	}
 	// dispatcher run
 	if err := dispatcher.Run(ctx); err != nil {
@@ -80,17 +67,17 @@ func run(ctx context.Context, container *di.Container) error {
 	return nil
 }
 
-// reverseShutdown shutdowns in reverse order.
-func reverseShutdown(ctx context.Context, container *di.Container, shutdowns shutdowns) error {
+// after invoke hooks in reverse order.
+func after(ctx context.Context, container *di.Container, hooks []hook) error {
 	done := make(chan struct{})
 	var errs errShutdown
 	go func() {
 		// shutdown bundles in reverse order
-		for i := len(shutdowns) - 1; i >= 0; i-- {
+		for i := len(hooks) - 1; i >= 0; i-- {
 			// bundle shutdown
-			bs := shutdowns[i]
-			if err := bs.shutdown(ctx, container); err != nil {
-				errs = append(errs, fmt.Errorf("shutdown %s failed: %w", bs.name, err))
+			h := hooks[i]
+			if err := container.Invoke(h.hook); err != nil {
+				errs = append(errs, fmt.Errorf("shutdown %s failed: %w", h.name, err))
 			}
 		}
 		done <- struct{}{}
@@ -106,12 +93,10 @@ func reverseShutdown(ctx context.Context, container *di.Container, shutdowns shu
 	}
 }
 
-type bundleShutdown struct {
-	name     string
-	shutdown func(ctx context.Context, container Container) error
+type hook struct {
+	name string
+	hook di.Invocation
 }
-
-type shutdowns []bundleShutdown
 
 type errShutdown []error
 

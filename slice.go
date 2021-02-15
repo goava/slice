@@ -3,6 +3,7 @@ package slice
 import (
 	"context"
 	"errors"
+	"flag"
 	"fmt"
 	"os"
 	"os/signal"
@@ -24,113 +25,148 @@ const (
 func Run(options ...Option) {
 	app := New(options...)
 	if err := app.Start(); err != nil {
-		app.logger.Fatal(err)
+		fmt.Println(err)
+		app.Logger.Fatal(err)
 	}
 }
 
 // New creates slice application with provided options.
 func New(options ...Option) *Application {
-	s := Application{
-		info: &Info{},
-	}
+	s := Application{}
 	for _, opt := range options {
 		opt.apply(&s)
-	}
-	env, _ := lookupEnv(defaultEnv)
-	s.info.Env = parseEnv(env)
-	if debug, ok := lookupEnv(defaultDebug); ok {
-		s.info.Debug = strings.ToLower(debug) == "true"
-	}
-	if s.configurator == nil {
-		s.configurator = defaultBundleConfigurator()
-	}
-	if s.timeouts.boot == 0 {
-		s.timeouts.boot = defaultTimeout
-	}
-	if s.timeouts.shutdown == 0 {
-		s.timeouts.shutdown = defaultTimeout
 	}
 	return &s
 }
 
 // Application is a controlling part of application.
 type Application struct {
-	stop         func()
-	di           []di.Option
-	bundles      []Bundle
-	logger       Logger
-	dispatcher   Dispatcher
-	configurator bundleConfigurator
-	timeouts     struct {
-		boot     time.Duration
-		shutdown time.Duration
-	}
-	info *Info
+	Name            string
+	Env             Env
+	Debug           bool
+	Prefix          string
+	Parameters      []Parameter
+	Components      []di.Option
+	Dispatcher      Dispatcher
+	Bundles         []Bundle
+	StartTimeout    time.Duration
+	StopTimeout     time.Duration
+	Logger          Logger
+	ParameterParser ParameterParser
+
+	stop func()
 }
 
 // Starts start slice.
 func (app *Application) Start() error {
-	app.logger = &stdLogger{}
-	if app.info == nil || app.info.Name == "" {
+	// set defaults
+	if app.Logger == nil {
+		app.Logger = &stdLogger{}
+	}
+	if app.ParameterParser == nil {
+		app.ParameterParser = &stdParameterParser{}
+	}
+	if app.StartTimeout == 0 {
+		app.StartTimeout = defaultTimeout
+	}
+	if app.StopTimeout == 0 {
+		app.StopTimeout = defaultTimeout
+	}
+	// check application name
+	if len(app.Name) == 0 {
 		return fmt.Errorf("application name must be specified, see slice.SetName() option")
 	}
+	// lookup environment
+	env, _ := lookupEnv(defaultEnv)
+	app.Env = parseEnv(env)
+	if debug, ok := lookupEnv(defaultDebug); ok {
+		app.Debug = strings.ToLower(debug) == "true"
+	}
+	// initialize context
 	base, stop := context.WithCancel(context.Background())
 	ctx := NewContext(base)
 	// store context cancel
 	app.stop = stop
-	// add application context
-	app.di = append(app.di, di.Provide(func() *Context { return ctx }, di.As(new(context.Context))))
-	app.di = append(app.di, di.Provide(func() Info { return *app.info }))
+	info := Info{
+		Name:  app.Name,
+		Env:   app.Env,
+		Debug: app.Debug,
+	}
+	// add application context and info
+	components := append(app.Components,
+		di.Provide(func() *Context { return ctx }, di.As(new(context.Context))),
+		di.Provide(func() Info { return info }),
+	)
 	// sort bundles
-	sorted, ok := sortBundles(app.bundles)
+	sorted, ok := sortBundles(app.Bundles)
 	if !ok {
 		return fmt.Errorf("bundle cyclic detected") // todo: improve error message
 	}
-	// load bundle information
-	bundles := inspectBundles(sorted...)
-	// configure bundles
-	if err := configureBundles(app.configurator, bundles...); err != nil {
-		return err
-	}
 	// create dependency injection container
-	container, err := createContainer(app.di...)
+	container, err := createContainer(components...)
 	if err != nil {
 		return err
 	}
 	// build bundle dependencies
-	if err := buildBundles(container, bundles...); err != nil {
+	if err := buildBundles(container, sorted...); err != nil {
 		return err
 	}
-	// resolve logger from container
-	// if logger not found it will remain std
-	_ = container.Resolve(&app.logger)
+	// resolve Logger from container
+	// if Logger not found it will remain std
+	if err = container.Resolve(&app.Logger); errors.Is(err, di.ErrTypeNotExists) {
+		if err := container.ProvideValue(app.Logger, di.As(new(Logger))); err != nil {
+			return err
+		}
+	}
+	parameters := app.Parameters
+	// add bundle parameters
+	for _, bundle := range app.Bundles {
+		parameters = append(parameters, bundle.Parameters...)
+	}
+	var help bool
+	flag.BoolVar(&help, "parameters", false, "Display parameters information")
+	flag.Parse()
+	if help {
+		if err := app.ParameterParser.Usage(app.Prefix, parameters...); err != nil {
+			return err
+		}
+		return nil
+	}
+	if err := app.ParameterParser.Parse(app.Prefix, parameters...); err != nil {
+		return err
+	}
+	for _, parameter := range parameters {
+		if err := container.ProvideValue(parameter); err != nil {
+			return fmt.Errorf("provide parameter failed; %w", err)
+		}
+	}
 	// start goroutine with os signal catch
 	go app.catchSignals()
-	startCtx, _ := context.WithTimeout(ctx, app.timeouts.boot)
+	startCtx, _ := context.WithTimeout(ctx, app.StartTimeout)
 	// boot bundles
-	shutdowns, err := boot(startCtx, container, bundles...)
+	hooks, err := before(startCtx, container, app.Bundles...)
 	// if boot failed shutdown booted bundles
 	if err != nil {
 		// create context for shutdown
-		shutdownCtx, cancel := context.WithTimeout(context.Background(), app.timeouts.shutdown)
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), app.StopTimeout)
 		defer cancel()
-		if rserr := reverseShutdown(shutdownCtx, container, shutdowns); rserr != nil {
+		if rserr := after(shutdownCtx, container, hooks); rserr != nil {
 			return fmt.Errorf("%w (%s)", err, rserr)
 		}
 		return err
 	}
-	app.logger.Printf("Start")
+	app.Logger.Printf("Start")
 	// run application, ignore context cancel error
 	// default context lifecycle used for application shutdown
 	if err := run(ctx, container); err != nil && !errors.Is(err, context.Canceled) {
 		return err
 	}
-	app.logger.Printf("Shutdown")
+	app.Logger.Printf("Stop")
 	// create context for shutdown
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), app.timeouts.shutdown)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), app.StopTimeout)
 	defer cancel()
 	// shutdown bundles in reverse order
-	if err = reverseShutdown(shutdownCtx, container, shutdowns); err != nil {
+	if err = after(shutdownCtx, container, hooks); err != nil {
 		return fmt.Errorf("%w", err)
 	}
 	return err
@@ -146,6 +182,6 @@ func (app *Application) catchSignals() {
 	stop := make(chan os.Signal)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
 	sign := <-stop
-	app.logger.Printf(strings.Title(sign.String()))
+	app.Logger.Printf(strings.Title(sign.String()))
 	app.stop()
 }

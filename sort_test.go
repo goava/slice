@@ -30,69 +30,29 @@ func Test_sortBundles(t *testing.T) {
 		require.Len(t, result, 4)
 		require.Equal(t, []Bundle{first, second, four, third}, result)
 	})
-
-	t.Run("cycle", func(t *testing.T) {
-		bundles := []Bundle{cycle}
-		_, valid := sortBundles(bundles)
-		require.False(t, valid)
-	})
-}
-
-type FirstBundle struct {
-}
-
-func (f FirstBundle) Build(builder ContainerBuilder) {}
-
-type SecondBundle struct {
-}
-
-func (d SecondBundle) Build(builder ContainerBuilder) {}
-
-func (d SecondBundle) Bundles() []Bundle {
-	return []Bundle{
-		&FirstBundle{},
-	}
-}
-
-type ThirdBundle struct {
-}
-
-func (t ThirdBundle) Build(builder ContainerBuilder) {}
-
-func (t ThirdBundle) Bundles() []Bundle {
-	return []Bundle{
-		&SecondBundle{},
-		&FourBundle{},
-	}
-}
-
-type FourBundle struct {
-}
-
-func (t FourBundle) Build(builder ContainerBuilder) {}
-
-func (t FourBundle) Bundles() []Bundle {
-	return []Bundle{
-		&FirstBundle{},
-	}
-}
-
-type CycleBundle struct {
-}
-
-func (c CycleBundle) Build(builder ContainerBuilder) {
-}
-
-func (c CycleBundle) Bundles() []Bundle {
-	return []Bundle{
-		&CycleBundle{},
-	}
 }
 
 var (
-	first  = &FirstBundle{}
-	second = &SecondBundle{}
-	third  = &ThirdBundle{}
-	four   = &FourBundle{}
-	cycle  = &CycleBundle{}
+	first = Bundle{
+		Name: "first-bundle",
+	}
+	second = Bundle{
+		Name: "second-bundle",
+		Bundles: []Bundle{
+			first,
+		},
+	}
+	third = Bundle{
+		Name: "third-bundle",
+		Bundles: []Bundle{
+			second,
+			four,
+		},
+	}
+	four = Bundle{
+		Name: "four-bundle",
+		Bundles: []Bundle{
+			first,
+		},
+	}
 )

@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestLifecycle_initialization(t *testing.T) {
+func TestLifecycle_createContainer(t *testing.T) {
 	t.Run("provide user dependency", func(t *testing.T) {
 		c, err := createContainer(
 			di.Provide(http.NewServeMux),
@@ -34,87 +34,41 @@ func TestLifecycle_initialization(t *testing.T) {
 	})
 }
 
-func TestLifecycle_configureBundles(t *testing.T) {
-	t.Run("process iterates over all bundles", func(t *testing.T) {
-		bundles := []bundle{
-			{
-				name:   "first-bundle",
-				Bundle: &BundleMock{},
-			},
-			{
-				name:   "second-bundle",
-				Bundle: &BundleMock{},
-			},
-			{
-				name:   "third-bundle",
-				Bundle: &BundleMock{},
-			},
-		}
-		i := 0
-		err := configureBundles(func(bundle Bundle) error {
-			require.Equal(t, bundles[i].Bundle, bundle)
-			i++
-			return nil
-		}, bundles...)
-		require.NoError(t, err)
-		require.Equal(t, 3, i)
-	})
-
-	t.Run("process error causes configure error", func(t *testing.T) {
-		bundle := bundle{
-			name:   "error-bundle",
-			Bundle: &BundleMock{},
-		}
-		err := configureBundles(func(bundle Bundle) error {
-			return errors.New("unexpected error")
-		}, bundle)
-		require.EqualError(t, err, "configure error-bundle bundle failed: unexpected error")
-	})
-}
-
 func TestLifecycle_buildBundles(t *testing.T) {
-	t.Run("bundle builds in correct order", func(t *testing.T) {
+	t.Run("bundle components provided in correct order", func(t *testing.T) {
 		c, err := di.New()
 		require.NoError(t, err)
 		var order []string
-		firstBundle := &BundleMock{
-			BuildFunc: func(builder ContainerBuilder) {
-				order = append(order, "first")
+		first := Bundle{
+			Name: "first-bundle",
+			Components: []di.Option{
+				di.Invoke(func() {
+					order = append(order, "first")
+				}),
 			},
 		}
-		secondBundle := &BundleMock{
-			BuildFunc: func(builder ContainerBuilder) {
-				order = append(order, "second")
+		second := Bundle{
+			Name: "second-bundle",
+			Components: []di.Option{
+				di.Invoke(func() {
+					order = append(order, "second")
+				}),
 			},
 		}
-		bundles := []bundle{
-			{
-				name:   "first-bundle",
-				Bundle: firstBundle,
-			},
-			{
-				name:   "second-bundle",
-				Bundle: secondBundle,
-			},
-		}
-		err = buildBundles(c, bundles...)
+		err = buildBundles(c, first, second)
 		require.NoError(t, err)
-		require.Len(t, firstBundle.BuildCalls(), 1)
-		require.Len(t, secondBundle.BuildCalls(), 1)
 		require.Equal(t, []string{"first", "second"}, order)
 	})
 
 	t.Run("bundle build error return as one", func(t *testing.T) {
 		c, err := di.New()
 		require.NoError(t, err)
-		errorBundle := bundle{
-			name: "error-bundle",
-			Bundle: &BundleMock{
-				BuildFunc: func(builder ContainerBuilder) {
-					builder.Provide(func() {})
-					builder.Provide(nil)
-					builder.Provide(struct{}{})
-				},
+		errorBundle := Bundle{
+			Name: "error-bundle",
+			Components: []di.Option{
+				di.Provide(func() {}),
+				di.Provide(nil),
+				di.Provide(struct{}{}),
 			},
 		}
 		err = buildBundles(c, errorBundle)
@@ -126,39 +80,31 @@ func TestLifecycle_buildBundles(t *testing.T) {
 	})
 }
 
-func TestLifecycle_boot(t *testing.T) {
-	t.Run("iterates over bundles and run boot function", func(t *testing.T) {
+func TestLifecycle_before(t *testing.T) {
+	t.Run("iterates over bundles and run before hook", func(t *testing.T) {
 		c, err := di.New()
 		require.NoError(t, err)
 		require.NotNil(t, c)
 		var order []string
-		firstBundle := &BootShutdownMock{
-			BootFunc: func(ctx context.Context, container Container) error {
-				order = append(order, "first-bundle")
-				return nil
-			},
+		firstBundle := Bundle{
+			Name: "first-bundle",
+			Hooks: []Hook{{
+				Before: func() {
+					order = append(order, "first-bundle")
+				},
+			}},
 		}
-		secondBundle := &BootShutdownMock{
-			BootFunc: func(ctx context.Context, container Container) error {
-				order = append(order, "second-bundle")
-				return nil
-			},
+		secondBundle := Bundle{
+			Name: "second-bundle",
+			Hooks: []Hook{{
+				Before: func() {
+					order = append(order, "second-bundle")
+				},
+			}},
 		}
-		bundles := []bundle{
-			{
-				name:   "first-bundle",
-				Bundle: firstBundle,
-			},
-			{
-				name:   "second-bundle",
-				Bundle: secondBundle,
-			},
-		}
-		shutdowns, err := boot(context.Background(), c, bundles...)
+		shutdowns, err := before(context.Background(), c, firstBundle, secondBundle)
 		require.NoError(t, err)
 		require.Len(t, shutdowns, 2)
-		require.Len(t, firstBundle.BootCalls(), 1)
-		require.Len(t, secondBundle.BootCalls(), 1)
 		require.Equal(t, []string{"first-bundle", "second-bundle"}, order)
 	})
 
@@ -166,56 +112,47 @@ func TestLifecycle_boot(t *testing.T) {
 		c, err := di.New()
 		require.NoError(t, err)
 		require.NotNil(t, c)
-		bundle := bundle{
-			name: "error-bundle",
-			Bundle: &BootShutdownMock{
-				BootFunc: func(ctx context.Context, container Container) error {
-					return errors.New("unexpected error")
-				},
-			},
+		bundle := Bundle{
+			Name: "error-bundle",
+			Hooks: []Hook{{
+				Before: func() error { return errors.New("unexpected error") },
+			}},
 		}
-		shutdowns, err := boot(context.Background(), c, bundle)
+		hooks, err := before(context.Background(), c, bundle)
 		require.EqualError(t, err, "boot error-bundle bundle failed: unexpected error")
-		require.Len(t, shutdowns, 0)
+		require.Len(t, hooks, 0)
 	})
 
 	t.Run("shutdowns correct on context cancel", func(t *testing.T) {
 		c, err := di.New()
 		require.NoError(t, err)
 		require.NotNil(t, c)
-		firstBundle := &BootShutdownMock{
-			BootFunc: func(ctx context.Context, container Container) error {
-				time.Sleep(2 * time.Millisecond)
-				return nil
-			},
+		firstBundle := Bundle{
+			Name: "first-bundle",
+			Hooks: []Hook{{
+				Before: func() error {
+					time.Sleep(2 * time.Millisecond)
+					return nil
+				},
+			}},
 		}
-		secondBundle := &BootShutdownMock{
-			BootFunc: func(ctx context.Context, container Container) error {
-				return nil
-			},
+		secondBundle := Bundle{
+			Name: "second-bundle",
+			Hooks: []Hook{{
+				Before: func() {},
+			}},
 		}
-		bundles := []bundle{
-			{
-				name:   "first-bundle",
-				Bundle: firstBundle,
-			},
-			{
-				name:   "second-bundle",
-				Bundle: secondBundle,
-			},
-		}
+
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
-		shutdowns, err := boot(ctx, c, bundles...)
+		hooks, err := before(ctx, c, firstBundle, secondBundle)
 		require.EqualError(t, err, "boot first-bundle bundle failed: context canceled")
-		require.Len(t, firstBundle.BootCalls(), 0)
-		require.Len(t, secondBundle.BootCalls(), 0)
-		require.Len(t, shutdowns, 0)
+		require.Len(t, hooks, 0)
 	})
 }
 
 func TestLifecycle_drun(t *testing.T) {
-	t.Run("resolve dispatcher and run", func(t *testing.T) {
+	t.Run("resolve Dispatcher and run", func(t *testing.T) {
 		dispatcher := &DispatcherMock{
 			RunFunc: func(ctx context.Context) error {
 				return nil
@@ -228,13 +165,13 @@ func TestLifecycle_drun(t *testing.T) {
 		require.Len(t, dispatcher.RunCalls(), 1)
 	})
 
-	t.Run("undefined dispatcher cause error", func(t *testing.T) {
+	t.Run("undefined Dispatcher cause error", func(t *testing.T) {
 		c, err := di.New()
 		require.NoError(t, err)
 		require.NotNil(t, c)
 		err = run(context.Background(), c)
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "resolve dispatcher failed: ")
+		require.Contains(t, err.Error(), "resolve Dispatcher failed: ")
 		require.Contains(t, err.Error(), "lifecycle.go:")
 		require.Contains(t, err.Error(), ": type slice.Dispatcher not exists in the container")
 	})
@@ -253,37 +190,35 @@ func TestLifecycle_drun(t *testing.T) {
 	})
 }
 
-func TestLifecycle_reverseShutdown(t *testing.T) {
+func TestLifecycle_after(t *testing.T) {
 	t.Run("reverse order", func(t *testing.T) {
 		c, err := di.New()
 		require.NoError(t, err)
 		require.NotNil(t, c)
 		var order []string
-		shutdowns := shutdowns{
+		hooks := []hook{
 			{
 				name: "first-shutdown",
-				shutdown: func(ctx context.Context, container Container) error {
+				hook: func() {
 					order = append(order, "first-shutdown")
-					return nil
 				},
 			},
 			{
 				name: "second-shutdown",
-				shutdown: func(ctx context.Context, container Container) error {
+				hook: func() {
 					order = append(order, "second-shutdown")
-					return nil
 				},
 			},
 			{
 				name: "third-shutdown",
-				shutdown: func(ctx context.Context, container Container) error {
+				hook: func() {
 					order = append(order, "third-shutdown")
-					return nil
 				},
 			},
 		}
-		ctx, _ := context.WithTimeout(context.Background(), time.Second)
-		err = reverseShutdown(ctx, c, shutdowns)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		err = after(ctx, c, hooks)
 		require.NoError(t, err)
 		require.Equal(t, []string{"third-shutdown", "second-shutdown", "first-shutdown"}, order)
 	})
@@ -292,28 +227,29 @@ func TestLifecycle_reverseShutdown(t *testing.T) {
 		c, err := di.New()
 		require.NoError(t, err)
 		require.NotNil(t, c)
-		shutdowns := shutdowns{
+		hooks := []hook{
 			{
 				name: "first-shutdown",
-				shutdown: func(ctx context.Context, container Container) error {
+				hook: func() error {
 					return errors.New("first-error")
 				},
 			},
 			{
 				name: "second-shutdown",
-				shutdown: func(ctx context.Context, container Container) error {
+				hook: func() error {
 					return errors.New("second-error")
 				},
 			},
 			{
 				name: "third-shutdown",
-				shutdown: func(ctx context.Context, container Container) error {
+				hook: func() error {
 					return errors.New("third-error")
 				},
 			},
 		}
-		ctx, _ := context.WithTimeout(context.Background(), time.Second)
-		err = reverseShutdown(ctx, c, shutdowns)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		err = after(ctx, c, hooks)
 		require.EqualError(t, err, "shutdown failed: shutdown third-shutdown failed: third-error; shutdown second-shutdown failed: second-error; shutdown first-shutdown failed: first-error")
 	})
 
@@ -321,29 +257,30 @@ func TestLifecycle_reverseShutdown(t *testing.T) {
 		c, err := di.New()
 		require.NoError(t, err)
 		require.NotNil(t, c)
-		shutdowns := shutdowns{
+		shutdowns := []hook{
 			{
 				name: "first-shutdown",
-				shutdown: func(ctx context.Context, container Container) error {
+				hook: func() error {
 					time.Sleep(time.Hour)
 					return nil
 				},
 			},
 			{
 				name: "second-shutdown",
-				shutdown: func(ctx context.Context, container Container) error {
+				hook: func() error {
 					return errors.New("second-error")
 				},
 			},
 			{
 				name: "third-shutdown",
-				shutdown: func(ctx context.Context, container Container) error {
+				hook: func() error {
 					return errors.New("third-error")
 				},
 			},
 		}
-		ctx, _ := context.WithTimeout(context.Background(), time.Nanosecond)
-		err = reverseShutdown(ctx, c, shutdowns)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Nanosecond)
+		defer cancel()
+		err = after(ctx, c, shutdowns)
 		require.EqualError(t, err, "shutdown failed: context deadline exceeded")
 	})
 }
