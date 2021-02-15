@@ -11,45 +11,48 @@ type Option interface {
 	apply(s *Application)
 }
 
-// SetName sets application name.
+// WithName sets application name.
 // In case you need to change the name, you can use the APP_NAME environment variable.
-func SetName(name string) Option {
+func WithName(name string) Option {
 	return option(func(s *Application) {
-		if s.info == nil {
-			s.info = &Info{}
-		}
-		s.info.Name = name
+		s.Name = name
+	})
+}
+
+// WithParameters adds parameters to container. On boot stage all parameter structures
+// will be processed via ParameterParser.
+func WithParameters(parameters ...Parameter) Option {
+	return option(func(s *Application) {
+		s.Parameters = append(s.Parameters, parameters...)
 	})
 }
 
 // RegisterBundles registers application bundles.
-// todo: naming can be changed
-func RegisterBundles(bundles ...Bundle) Option {
+func WithBundles(bundles ...Bundle) Option {
 	return option(func(s *Application) {
-		s.bundles = append(s.bundles, bundles...)
+		s.Bundles = append(s.Bundles, bundles...)
 	})
 }
 
 // ConfigureContainer configures the dependency injection container. It saves container options for the compile stage.
 // On compile stage they will be applied on container.
-// todo: naming can be changed
-func ConfigureContainer(options ...di.Option) Option {
+func WithComponents(components ...di.Option) Option {
 	return option(func(s *Application) {
-		s.di = append(s.di, options...)
+		s.Components = append(s.Components, components...)
 	})
 }
 
 // BootTimeout sets application boot timeout.
-func BootTimeout(timeout time.Duration) Option {
+func StartTimeout(timeout time.Duration) Option {
 	return option(func(s *Application) {
-		s.timeouts.boot = timeout
+		s.StartTimeout = timeout
 	})
 }
 
 // ShutdownTimeout sets application shutdown timeout.
-func ShutdownTimeout(timeout time.Duration) Option {
+func StopTimeout(timeout time.Duration) Option {
 	return option(func(s *Application) {
-		s.timeouts.shutdown = timeout
+		s.StopTimeout = timeout
 	})
 }
 

@@ -4,7 +4,7 @@ import (
 	"log"
 )
 
-// this variable need for replace std logger to mock
+// this variable need for replace std Logger to mock
 var stdLog Logger = stdLogger{}
 
 // Logger

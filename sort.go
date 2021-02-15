@@ -1,7 +1,5 @@
 package slice
 
-import "reflect"
-
 const (
 	temporary = 1
 	permanent = 2
@@ -10,7 +8,7 @@ const (
 // sortBundles is a step of application bootstrap.
 func sortBundles(bundles []Bundle) ([]Bundle, bool) {
 	var sorted []Bundle
-	marks := map[reflect.Type]int{}
+	marks := map[string]int{}
 	for _, b := range bundles {
 		if !visit(b, marks, &sorted) {
 			return sorted, false
@@ -20,29 +18,26 @@ func sortBundles(bundles []Bundle) ([]Bundle, bool) {
 }
 
 // visit
-func visit(b Bundle, marks map[reflect.Type]int, sorted *[]Bundle) bool {
-	typ := reflect.TypeOf(b)
-	if marks[typ] == permanent {
+func visit(b Bundle, marks map[string]int, sorted *[]Bundle) bool {
+	if marks[b.Name] == permanent {
 		return true
 	}
-	if marks[typ] == temporary {
+	if marks[b.Name] == temporary {
 		// acyclic
 		return false
 	}
-	dependOn, ok := b.(ComposedBundle)
-	if !ok {
-		marks[typ] = permanent
+	if len(b.Bundles) == 0 {
+		marks[b.Name] = permanent
 		*sorted = append(*sorted, b)
 		return true
 	}
-	marks[typ] = temporary
-	deps := dependOn.Bundles()
-	for _, dep := range deps {
+	marks[b.Name] = temporary
+	for _, dep := range b.Bundles {
 		if !visit(dep, marks, sorted) {
 			return false
 		}
 	}
-	marks[typ] = permanent
+	marks[b.Name] = permanent
 	*sorted = append(*sorted, b)
 	return true
 }
