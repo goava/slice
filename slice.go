@@ -25,7 +25,6 @@ const (
 func Run(options ...Option) {
 	app := New(options...)
 	if err := app.Start(); err != nil {
-		fmt.Println(err)
 		app.Logger.Fatal(err)
 	}
 }
