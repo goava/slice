@@ -108,7 +108,7 @@ func (app *Application) Start() error {
 	}
 	parameters := app.Parameters
 	// add bundle parameters
-	for _, bundle := range app.Bundles {
+	for _, bundle := range sorted {
 		parameters = append(parameters, bundle.Parameters...)
 	}
 	var help bool
@@ -143,7 +143,7 @@ func (app *Application) Start() error {
 	go app.catchSignals()
 	startCtx, _ := context.WithTimeout(ctx, app.StartTimeout)
 	// boot bundles
-	hooks, err := before(startCtx, container, app.Bundles...)
+	hooks, err := before(startCtx, container, sorted...)
 	// if boot failed shutdown booted bundles
 	if err != nil {
 		// create context for shutdown
