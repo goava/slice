@@ -107,17 +107,6 @@ func (app *Application) Start() error {
 	if err != nil {
 		return err
 	}
-	// build bundle dependencies
-	if err := buildBundles(container, sorted...); err != nil {
-		return err
-	}
-	// resolve Logger from container
-	// if Logger not found it will remain std
-	if err = container.Resolve(&app.Logger); errors.Is(err, di.ErrTypeNotExists) {
-		if err := container.ProvideValue(app.Logger, di.As(new(Logger))); err != nil {
-			return err
-		}
-	}
 	parameters := app.Parameters
 	// add bundle parameters
 	for _, bundle := range app.Bundles {
@@ -138,6 +127,17 @@ func (app *Application) Start() error {
 	for _, parameter := range parameters {
 		if err := container.ProvideValue(parameter); err != nil {
 			return fmt.Errorf("provide parameter failed; %w", err)
+		}
+	}
+	// build bundle dependencies
+	if err := buildBundles(container, sorted...); err != nil {
+		return err
+	}
+	// resolve Logger from container
+	// if Logger not found it will remain std
+	if err = container.Resolve(&app.Logger); errors.Is(err, di.ErrTypeNotExists) {
+		if err := container.ProvideValue(app.Logger, di.As(new(Logger))); err != nil {
+			return err
 		}
 	}
 	// start goroutine with os signal catch
