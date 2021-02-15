@@ -7,8 +7,9 @@ import (
 	"testing"
 
 	"github.com/goava/di"
-	"github.com/goava/slice"
 	"github.com/stretchr/testify/require"
+
+	"github.com/goava/slice"
 )
 
 type TestDispatcher struct {
@@ -46,9 +47,8 @@ func TestInitializationErrors(t *testing.T) {
 func TestRun(t *testing.T) {
 	t.Run("run", func(t *testing.T) {
 		slice.Run(
-			slice.SetName("test_run"),
-			slice.RegisterBundles(),
-			slice.ConfigureContainer(
+			slice.WithName("test_run"),
+			slice.WithComponents(
 				di.Provide(NewTestDispatcher, di.As(new(slice.Dispatcher))),
 			),
 		)
