@@ -8,9 +8,7 @@ import (
 )
 
 // DefaultTableFormat constant to use to display usage in a tabular format
-const DefaultTableFormat = `
-{{range .}}{{usage_key .}}	{{usage_type .}}	{{usage_default .}}	{{usage_required .}}	{{usage_description .}}
-{{end}}`
+const DefaultTableFormat = `{{range .}}{{usage_key .}}	{{usage_type .}}	{{usage_default .}}	{{usage_required .}}	{{usage_description .}}{{end}}`
 
 // Parameter contains external configuration data.
 //
