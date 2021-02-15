@@ -63,13 +63,14 @@ type Controller interface {
 }
 
 // RegisterHTTPControllers
-func RegisterHTTPControllers(container *di.Container, mux *http.ServeMux) error {
+func RegisterHTTPControllers(logger slice.Logger, container *di.Container, mux *http.ServeMux) error {
 	var controllers []Controller
 	has, err := container.Has(&controllers)
 	if err != nil {
 		return err
 	}
 	if !has {
+		logger.Printf("Controllers not found")
 		return nil
 	}
 	if err := container.Resolve(&controllers); err != nil {
