@@ -8,8 +8,7 @@ import (
 )
 
 // DefaultTableFormat constant to use to display usage in a tabular format
-const DefaultTableFormat = `
-{{range .}}{{usage_key .}}	{{usage_type .}}	{{usage_default .}}	{{usage_required .}}	{{usage_description .}}
+const DefaultTableFormat = `{{range .}}{{usage_key .}}	{{usage_type .}}	{{usage_default .}}	{{usage_required .}}	{{usage_description .}}
 {{end}}`
 
 // Parameter contains external configuration data.
@@ -34,7 +33,7 @@ type stdParameterParser struct {
 
 func (d stdParameterParser) Usage(prefix string, parameters ...Parameter) error {
 	tabs := tabwriter.NewWriter(os.Stdout, 1, 0, 4, ' ', 0)
-	if _, err := tabs.Write([]byte("KEY\tTYPE\tDEFAULT\tREQUIRED\tDESCRIPTION")); err != nil {
+	if _, err := tabs.Write([]byte("KEY\tTYPE\tDEFAULT\tREQUIRED\tDESCRIPTION\n")); err != nil {
 		return err
 	}
 	for _, parameter := range parameters {
