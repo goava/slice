@@ -75,8 +75,8 @@ func TestLifecycle_buildBundles(t *testing.T) {
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "build error-bundle bundle failed:")
 		require.Contains(t, err.Error(), "invalid constructor signature, got func()")
-		//require.Contains(t, err.Error(), "invalid constructor signature, got nil")
-		//require.Contains(t, err.Error(), "invalid constructor signature, got struct {}")
+		// require.Contains(t, err.Error(), "invalid constructor signature, got nil")
+		// require.Contains(t, err.Error(), "invalid constructor signature, got struct {}")
 	})
 }
 
