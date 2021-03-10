@@ -141,15 +141,16 @@ func (app *Application) Start() error {
 	}
 	// start goroutine with os signal catch
 	go app.catchSignals()
-	startCtx, _ := context.WithTimeout(ctx, app.StartTimeout)
+	startCtx, startCancel := context.WithTimeout(ctx, app.StartTimeout)
 	// boot bundles
-	hooks, err := before(startCtx, container, sorted...)
+	hooks, err := beforeStart(startCtx, container, sorted...)
+	startCancel()
 	// if boot failed shutdown booted bundles
 	if err != nil {
 		// create context for shutdown
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), app.StopTimeout)
 		defer cancel()
-		if rserr := after(shutdownCtx, container, hooks); rserr != nil {
+		if rserr := beforeShutdown(shutdownCtx, container, hooks); rserr != nil {
 			return fmt.Errorf("%w (%s)", err, rserr)
 		}
 		return err
@@ -165,7 +166,7 @@ func (app *Application) Start() error {
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), app.StopTimeout)
 	defer cancel()
 	// shutdown bundles in reverse order
-	if err = after(shutdownCtx, container, hooks); err != nil {
+	if err = beforeShutdown(shutdownCtx, container, hooks); err != nil {
 		return fmt.Errorf("%w", err)
 	}
 	return err

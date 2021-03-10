@@ -16,6 +16,19 @@ approach based on
 and
 [modular programming](https://en.wikipedia.org/wiki/Modular_programming).
 
+## Lifecycle
+
+- Initialize slice variables and components:
+  - `slice.Info`: Application information: name, env and debug flag
+  - `slice.Context`: Mutable context
+  - `slice.Logger`: System logger (default: `stdout`)
+  - `slice.ParameterParser`: Application parameter parser (default: `envconfig`)
+- Create the container with user and slice components
+- Parse all parameters (with bundle parameters)
+- Invoke `BeforeStart` bundles hook
+- Run dispatcher
+- Invoke `BeforeShutdown` bundles hook
+
 ## Overview
 
 ```go

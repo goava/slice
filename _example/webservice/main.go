@@ -7,7 +7,7 @@ import (
 	"github.com/goava/di"
 
 	"github.com/goava/slice"
-	"github.com/goava/slice/_example/webservice/httpsrv"
+	"github.com/goava/slice/_example/bundles/httpsrv"
 )
 
 func main() {

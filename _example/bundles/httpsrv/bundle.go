@@ -39,7 +39,7 @@ var Bundle = bundle.New(
 	),
 	bundle.WithHooks(
 		slice.Hook{
-			Before: RegisterHTTPControllers,
+			BeforeStart: RegisterHTTPControllers,
 		},
 	),
 )

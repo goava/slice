@@ -33,20 +33,34 @@ func buildBundles(container *di.Container, bundles ...Bundle) error {
 // before is a step of application bootstrap. It iterates over all registered bundles and call their Boot()
 // method. If bundle boot are success shutdown function will be returned in shutdowns. In case, that boot
 // failed process of booting application will be stopped.
-func before(ctx context.Context, container *di.Container, bundles ...Bundle) (after []hook, _ error) {
+func beforeStart(ctx context.Context, container *di.Container, bundles ...Bundle) (after []hook, _ error) {
 	for _, bundle := range bundles {
 		if err := ctx.Err(); err != nil {
 			return after, fmt.Errorf("boot %s bundle failed: %w", bundle.Name, err)
 		}
 		for _, h := range bundle.Hooks {
-			if err := container.Invoke(h.Before); err != nil {
-				return nil, fmt.Errorf("boot %s bundle failed: %w", bundle.Name, err)
+			// todo: remove in next versions
+			if h.Before != nil {
+				if err := container.Invoke(h.Before); err != nil {
+					return nil, fmt.Errorf("boot %s bundle failed: %w", bundle.Name, err)
+				}
+				if h.After != nil {
+					after = append(after, hook{
+						name: bundle.Name,
+						hook: h.After,
+					})
+				}
 			}
-			if h.After != nil {
-				after = append(after, hook{
-					name: bundle.Name,
-					hook: h.After,
-				})
+			if h.BeforeStart != nil {
+				if err := container.Invoke(h.BeforeStart); err != nil {
+					return nil, fmt.Errorf("boot %s bundle failed: %w", bundle.Name, err)
+				}
+				if h.BeforeShutdown != nil {
+					after = append(after, hook{
+						name: bundle.Name,
+						hook: h.BeforeShutdown,
+					})
+				}
 			}
 		}
 	}
@@ -67,8 +81,8 @@ func run(ctx context.Context, container *di.Container) error {
 	return nil
 }
 
-// after invoke hooks in reverse order.
-func after(ctx context.Context, container *di.Container, hooks []hook) error {
+// beforeShutdown invoke hooks in reverse order.
+func beforeShutdown(ctx context.Context, container *di.Container, hooks []hook) error {
 	done := make(chan struct{})
 	var errs errShutdown
 	go func() {

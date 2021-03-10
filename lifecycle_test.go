@@ -103,7 +103,7 @@ func TestLifecycle_before(t *testing.T) {
 				},
 			}},
 		}
-		shutdowns, err := before(context.Background(), c, firstBundle, secondBundle)
+		shutdowns, err := beforeStart(context.Background(), c, firstBundle, secondBundle)
 		require.NoError(t, err)
 		require.Len(t, shutdowns, 1)
 		require.Equal(t, []string{"first-bundle", "second-bundle"}, order)
@@ -119,7 +119,7 @@ func TestLifecycle_before(t *testing.T) {
 				Before: func() error { return errors.New("unexpected error") },
 			}},
 		}
-		hooks, err := before(context.Background(), c, bundle)
+		hooks, err := beforeStart(context.Background(), c, bundle)
 		require.EqualError(t, err, "boot error-bundle bundle failed: unexpected error")
 		require.Len(t, hooks, 0)
 	})
@@ -146,7 +146,7 @@ func TestLifecycle_before(t *testing.T) {
 
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
-		hooks, err := before(ctx, c, firstBundle, secondBundle)
+		hooks, err := beforeStart(ctx, c, firstBundle, secondBundle)
 		require.EqualError(t, err, "boot first-bundle bundle failed: context canceled")
 		require.Len(t, hooks, 0)
 	})
@@ -219,7 +219,7 @@ func TestLifecycle_after(t *testing.T) {
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
-		err = after(ctx, c, hooks)
+		err = beforeShutdown(ctx, c, hooks)
 		require.NoError(t, err)
 		require.Equal(t, []string{"third-shutdown", "second-shutdown", "first-shutdown"}, order)
 	})
@@ -250,7 +250,7 @@ func TestLifecycle_after(t *testing.T) {
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
-		err = after(ctx, c, hooks)
+		err = beforeShutdown(ctx, c, hooks)
 		require.EqualError(t, err, "shutdown failed: shutdown third-shutdown failed: third-error; shutdown second-shutdown failed: second-error; shutdown first-shutdown failed: first-error")
 	})
 
@@ -281,7 +281,7 @@ func TestLifecycle_after(t *testing.T) {
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Nanosecond)
 		defer cancel()
-		err = after(ctx, c, shutdowns)
+		err = beforeShutdown(ctx, c, shutdowns)
 		require.EqualError(t, err, "shutdown failed: context deadline exceeded")
 	})
 }
