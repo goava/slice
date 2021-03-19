@@ -120,7 +120,7 @@ func TestLifecycle_before(t *testing.T) {
 			}},
 		}
 		hooks, err := beforeStart(context.Background(), c, bundle)
-		require.EqualError(t, err, "boot error-bundle bundle failed: unexpected error")
+		require.EqualError(t, err, "- boot error-bundle bundle failed: unexpected error\n")
 		require.Len(t, hooks, 0)
 	})
 
