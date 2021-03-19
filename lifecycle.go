@@ -34,6 +34,7 @@ func buildBundles(container *di.Container, bundles ...Bundle) error {
 // method. If bundle boot are success shutdown function will be returned in shutdowns. In case, that boot
 // failed process of booting application will be stopped.
 func beforeStart(ctx context.Context, container *di.Container, bundles ...Bundle) (after []hook, _ error) {
+	var errs startErrors
 	for _, bundle := range bundles {
 		if err := ctx.Err(); err != nil {
 			return after, fmt.Errorf("boot %s bundle failed: %w", bundle.Name, err)
@@ -42,7 +43,7 @@ func beforeStart(ctx context.Context, container *di.Container, bundles ...Bundle
 			// todo: remove in next versions
 			if h.Before != nil {
 				if err := container.Invoke(h.Before); err != nil {
-					return nil, fmt.Errorf("boot %s bundle failed: %w", bundle.Name, err)
+					errs = append(errs, fmt.Errorf("boot %s bundle failed: %w", bundle.Name, err))
 				}
 				if h.After != nil {
 					after = append(after, hook{
@@ -53,7 +54,7 @@ func beforeStart(ctx context.Context, container *di.Container, bundles ...Bundle
 			}
 			if h.BeforeStart != nil {
 				if err := container.Invoke(h.BeforeStart); err != nil {
-					return nil, fmt.Errorf("boot %s bundle failed: %w", bundle.Name, err)
+					errs = append(errs, fmt.Errorf("boot %s bundle failed: %w", bundle.Name, err))
 				}
 				if h.BeforeShutdown != nil {
 					after = append(after, hook{
@@ -63,6 +64,9 @@ func beforeStart(ctx context.Context, container *di.Container, bundles ...Bundle
 				}
 			}
 		}
+	}
+	if len(errs) != 0 {
+		return nil, errs
 	}
 	return after, nil
 }

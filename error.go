@@ -2,6 +2,7 @@ package slice
 
 import (
 	"fmt"
+	"os"
 	"reflect"
 )
 
@@ -30,4 +31,9 @@ type bundleDIError struct {
 // Error implements error interface.
 func (p bundleDIError) Error() string {
 	return fmt.Sprintf("%s", p.err)
+}
+
+func printStartError(err error) {
+	fmt.Printf("%s", err)
+	os.Exit(1)
 }

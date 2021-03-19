@@ -153,7 +153,7 @@ func (app *Application) Start() error {
 		if rserr := beforeShutdown(shutdownCtx, container, hooks); rserr != nil {
 			return fmt.Errorf("%w (%s)", err, rserr)
 		}
-		return err
+		printStartError(err)
 	}
 	app.Logger.Printf("Start")
 	// run application, ignore context cancel error

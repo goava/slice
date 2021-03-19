@@ -1,6 +1,8 @@
 package slice
 
 import (
+	"fmt"
+
 	"github.com/goava/di"
 )
 
@@ -11,4 +13,14 @@ type Bundle struct {
 	Components []di.Option
 	Hooks      []Hook
 	Bundles    []Bundle
+}
+
+type startErrors []error
+
+// Error
+func (e startErrors) Error() (r string) {
+	for _, err := range e {
+		r = fmt.Sprintf("%s- %s\n", r, err)
+	}
+	return r
 }
