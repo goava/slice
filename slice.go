@@ -120,6 +120,10 @@ func (app *Application) Start() error {
 		}
 		return nil
 	}
+	// build bundle dependencies
+	if err := buildBundles(container, sorted...); err != nil {
+		return err
+	}
 	if err := app.ParameterParser.Parse(app.Prefix, parameters...); err != nil {
 		return err
 	}
@@ -127,10 +131,6 @@ func (app *Application) Start() error {
 		if err := container.ProvideValue(parameter); err != nil {
 			return fmt.Errorf("provide parameter failed; %w", err)
 		}
-	}
-	// build bundle dependencies
-	if err := buildBundles(container, sorted...); err != nil {
-		return err
 	}
 	// resolve Logger from container
 	// if Logger not found it will remain std
