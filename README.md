@@ -45,7 +45,9 @@ func main() {
 
 ## Minimal start
 
-##### Set application name
+The minimum that you need to run the application on `slice`.
+
+### Set application name
 
 Use `slice.WithName("your name")` to specify the application name.
 
@@ -56,16 +58,25 @@ slice.Run(
 )
 ```
 
-##### Check application environment
+### Check application environment
 
 Use environment variable `ENV` to specify the application environment.
 The value can be any string. Environments that have a prefix `dev` will
 be recognized as a development environment. Others will be recognized as
 production.
 
-###### Provide application dispatcher.
+### Provide application dispatcher
 
-Provide `slice.Dispatcher` implementation.
+Provide your own `slice.Dispatcher` implementation:
+
+```go
+slice.Run(
+    slice.WithName("sliced"),
+    slice.WithComponents(
+        di.Provide(NewDispatcher, di.As(new(slice.Dispatcher))),
+    ),
+)
+```
 
 ## Lifecycle
 
