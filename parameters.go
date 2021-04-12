@@ -11,7 +11,7 @@ import (
 const DefaultTableFormat = `{{range .}}{{usage_key .}}	{{usage_type .}}	{{usage_default .}}	{{usage_required .}}	{{usage_description .}}
 {{end}}`
 
-// Parameter contains external configuration data.
+// Parameter contains application configuration data.
 //
 //	type Parameters struct {
 //		Addr         string        `envconfig:"addr"`
@@ -21,14 +21,24 @@ const DefaultTableFormat = `{{range .}}{{usage_key .}}	{{usage_type .}}	{{usage_
 type Parameter interface {
 }
 
-// ParameterParser
+// ParameterParser parses application parameters.
 type ParameterParser interface {
-	// Parse
-	Parse(prefix string, parameter ...Parameter) error
-	Usage(prefix string, parameter ...Parameter) error
+	// Parse parses Parameter fields.
+	Parse(prefix string, parameters ...Parameter) error
+	// Usage prints parameters usage to stdout.
+	Usage(prefix string, parameters ...Parameter) error
 }
 
 type stdParameterParser struct {
+}
+
+func (d stdParameterParser) Parse(prefix string, parameters ...Parameter) error {
+	for _, parameter := range parameters {
+		if err := envconfig.Process(prefix, parameter); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (d stdParameterParser) Usage(prefix string, parameters ...Parameter) error {
@@ -42,13 +52,4 @@ func (d stdParameterParser) Usage(prefix string, parameters ...Parameter) error 
 		}
 	}
 	return tabs.Flush()
-}
-
-func (d stdParameterParser) Parse(prefix string, parameters ...Parameter) error {
-	for _, parameter := range parameters {
-		if err := envconfig.Process(prefix, parameter); err != nil {
-			return err
-		}
-	}
-	return nil
 }

@@ -10,24 +10,11 @@ Slice (Work in progress)
 
 During the process of writing software in the team, you develop a
 certain style and define standards that meet the requirements for this
-software. These standards grow into libraries and frameworks. This is our
-approach based on
+software. These standards grow into libraries and frameworks. This is
+our approach based on
 [interface-based programming](https://en.wikipedia.org/wiki/Interface-based_programming)
 and
 [modular programming](https://en.wikipedia.org/wiki/Modular_programming).
-
-## Lifecycle
-
-- Initialize slice variables and components:
-  - `slice.Info`: Application information: name, env and debug flag
-  - `slice.Context`: Mutable context
-  - `slice.Logger`: System logger (default: `stdout`)
-  - `slice.ParameterParser`: Application parameter parser (default: `envconfig`)
-- Create the container with user and slice components
-- Parse all parameters (with bundle parameters)
-- Invoke `BeforeStart` bundles hook
-- Run dispatcher
-- Invoke `BeforeShutdown` bundles hook
 
 ## Overview
 
@@ -56,13 +43,11 @@ func main() {
 }
 ```
 
-## Configuration
+## Minimal start
 
-##### NAME
+##### Set application name
 
-
-The name of application. Use `slice.WithName("your name")` to specify the
-application name.
+Use `slice.WithName("your name")` to specify the application name.
 
 ```go
 slice.Run(
@@ -71,20 +56,63 @@ slice.Run(
 )
 ```
 
-##### ENV
+##### Check application environment
 
-The application environment. Use environment variable `ENV` to specify
-application environment. The value can be any string.
+Use environment variable `ENV` to specify the application environment.
+The value can be any string. Environments that have a prefix `dev` will
+be recognized as a development environment. Others will be recognized as
+production.
 
-## TODO
+###### Provide application dispatcher.
 
-- [X] Environment bundle configuration
-- [x] Configuration abstraction
-- [ ] Batch update
-- [ ] Replace `envconfig` to `parameter`
-- [ ] Another parameter source (file, vault, consul).
-- [ ] 90+% test coverage
-- [ ] Bundle registry
+Provide `slice.Dispatcher` implementation.
+
+## Lifecycle
+
+- Initialize slice variables and components:
+  - `slice.Info`: Application information: name, env and debug flag
+  - `slice.Context`: Application context
+  - `slice.Logger`: System logger (default: `stdout`)
+  - `slice.ParameterParser`: Application parameter parser (default:
+    `envconfig`)
+- Create the container with user and slice components
+- Parse all parameters (with bundle parameters)
+- Invoke `BeforeStart` bundles hook
+- Run dispatcher
+- Invoke `BeforeShutdown` bundles hook
+
+## Lifecycle details
+
+### Parameter parsing
+
+Applications created with `slice` support parameter parsing. By default,
+it's processed by
+[envconfig](https://github.com/kelseyhightower/envconfig).
+
+You can use your own parameter parser. To do this, implement the
+`ParameterParser` interface and use it using the `WithParameterParser()`
+or by setting the `ParameterParser` field of the `Application`.
+
+You can print all parameters by using `<binary-name> --parameters`.
+Example output with default parameter parser and following structure:
+
+```go
+// Parameters contains application configuration.
+type Parameters struct {
+	Addr         string        `envconfig:"addr" required:"true" desc:"Server address"`
+	ReadTimeout  time.Duration `envconfig:"read_timeout" required:"true" desc:"Server read timeout"`
+	WriteTimeout time.Duration `envconfig:"write_timeout" required:"true" desc:"Server write timeout"`
+}
+```
+
+Output:
+
+```text
+KEY              TYPE        DEFAULT    REQUIRED    DESCRIPTION
+ADDR             String                 true        Server address
+READ_TIMEOUT     Duration               true        Server read timeout
+WRITE_TIMEOUT    Duration               true        Server write timeout
+```
 
 ## References
 

@@ -12,9 +12,9 @@ import (
 
 // Parameters contains application configuration.
 type Parameters struct {
-	Addr         string        `envconfig:"addr"`
-	ReadTimeout  time.Duration `envconfig:"read_timeout"`
-	WriteTimeout time.Duration `envconfig:"write_timeout"`
+	Addr         string        `envconfig:"addr" required:"true" desc:"Server address"`
+	ReadTimeout  time.Duration `envconfig:"read_timeout" required:"true" desc:"Server read timeout"`
+	WriteTimeout time.Duration `envconfig:"write_timeout" required:"true" desc:"Server write timeout"`
 }
 
 // DefaultParameters returns default application parameters.

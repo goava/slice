@@ -42,6 +42,13 @@ func WithComponents(components ...di.Option) Option {
 	})
 }
 
+// WithParameterParser sets parser for application.
+func WithParameterParser(parser ParameterParser) Option {
+	return option(func(s *Application) {
+		s.ParameterParser = parser
+	})
+}
+
 // BootTimeout sets application boot timeout.
 func StartTimeout(timeout time.Duration) Option {
 	return option(func(s *Application) {

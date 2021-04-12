@@ -111,10 +111,10 @@ func (app *Application) Start() error {
 	for _, bundle := range sorted {
 		parameters = append(parameters, bundle.Parameters...)
 	}
-	var help bool
-	flag.BoolVar(&help, "parameters", false, "Display parameters information")
+	var parametersFlag bool
+	flag.BoolVar(&parametersFlag, "parameters", false, "Display parameters information")
 	flag.Parse()
-	if help {
+	if parametersFlag {
 		if err := app.ParameterParser.Usage(app.Prefix, parameters...); err != nil {
 			return err
 		}
