@@ -120,17 +120,26 @@ func (app *Application) Start() error {
 		}
 		return nil
 	}
+	// parameter parser decorator, implemented for lazy parameter loading
+	decorator := func(pointer di.Value) error {
+		return app.ParameterParser.Parse(app.Prefix, pointer)
+	}
+	for _, parameter := range parameters {
+		if err := container.ProvideValue(parameter, di.Decorate(decorator)); err != nil {
+			return fmt.Errorf("provide parameter failed; %w", err)
+		}
+	}
 	// build bundle dependencies
 	if err := buildBundles(container, sorted...); err != nil {
 		return err
 	}
-	if err := app.ParameterParser.Parse(app.Prefix, parameters...); err != nil {
+	var dispatcher Dispatcher
+	has, err := container.Has(&dispatcher)
+	if err != nil {
 		return err
 	}
-	for _, parameter := range parameters {
-		if err := container.ProvideValue(parameter); err != nil {
-			return fmt.Errorf("provide parameter failed; %w", err)
-		}
+	if !has {
+		return fmt.Errorf("slice.Dispatcher not found")
 	}
 	// resolve Logger from container
 	// if Logger not found it will remain std

@@ -166,13 +166,13 @@ func TestLifecycle_drun(t *testing.T) {
 		require.Len(t, dispatcher.RunCalls(), 1)
 	})
 
-	t.Run("undefined Dispatcher cause error", func(t *testing.T) {
+	t.Run("undefined dispatcher cause error", func(t *testing.T) {
 		c, err := di.New()
 		require.NoError(t, err)
 		require.NotNil(t, c)
 		err = run(context.Background(), c)
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "resolve Dispatcher failed: ")
+		require.Contains(t, err.Error(), "resolve dispatcher failed: ")
 		require.Contains(t, err.Error(), "lifecycle.go:")
 		require.Contains(t, err.Error(), ": type slice.Dispatcher not exists in the container")
 	})
