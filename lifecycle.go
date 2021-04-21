@@ -76,7 +76,7 @@ func run(ctx context.Context, container *di.Container) error {
 	// resolve dispatcher
 	var dispatcher Dispatcher
 	if err := container.Resolve(&dispatcher); err != nil {
-		return fmt.Errorf("resolve Dispatcher failed: %w", err)
+		return fmt.Errorf("resolve dispatcher failed: %w", err)
 	}
 	// dispatcher run
 	if err := dispatcher.Run(ctx); err != nil {
