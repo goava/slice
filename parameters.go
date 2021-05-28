@@ -11,7 +11,7 @@ import (
 const DefaultTableFormat = `{{range .}}{{usage_key .}}	{{usage_type .}}	{{usage_default .}}	{{usage_required .}}	{{usage_description .}}
 {{end}}`
 
-// Parameter contains application configuration data.
+// Parameter contains application configuration.
 //
 //	type Parameters struct {
 //		Addr         string        `envconfig:"addr"`

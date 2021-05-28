@@ -38,7 +38,7 @@ func New(options ...Option) *Application {
 	return &s
 }
 
-// Application is a controlling part of application.
+// Application is a control part of application.
 type Application struct {
 	Name            string
 	Env             Env
@@ -56,7 +56,7 @@ type Application struct {
 	stop func()
 }
 
-// Starts start slice.
+// Start starts application.
 func (app *Application) Start() error {
 	// set defaults
 	if app.Logger == nil {

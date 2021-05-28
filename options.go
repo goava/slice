@@ -27,14 +27,14 @@ func WithParameters(parameters ...Parameter) Option {
 	})
 }
 
-// RegisterBundles registers application bundles.
+// WithBundles registers application bundles.
 func WithBundles(bundles ...Bundle) Option {
 	return option(func(s *Application) {
 		s.Bundles = append(s.Bundles, bundles...)
 	})
 }
 
-// ConfigureContainer configures the dependency injection container. It saves container options for the compile stage.
+// WithComponents configures the dependency injection container. It saves container options for the compile stage.
 // On compile stage they will be applied on container.
 func WithComponents(components ...di.Option) Option {
 	return option(func(s *Application) {
@@ -49,14 +49,14 @@ func WithParameterParser(parser ParameterParser) Option {
 	})
 }
 
-// BootTimeout sets application boot timeout.
+// StartTimeout sets application boot timeout.
 func StartTimeout(timeout time.Duration) Option {
 	return option(func(s *Application) {
 		s.StartTimeout = timeout
 	})
 }
 
-// ShutdownTimeout sets application shutdown timeout.
+// StopTimeout sets application shutdown timeout.
 func StopTimeout(timeout time.Duration) Option {
 	return option(func(s *Application) {
 		s.StopTimeout = timeout

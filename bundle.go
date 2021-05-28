@@ -6,7 +6,7 @@ import (
 	"github.com/goava/di"
 )
 
-// Bundle
+// A Bundle  is a separate unit of application.
 type Bundle struct {
 	Name       string
 	Parameters []Parameter
