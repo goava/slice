@@ -133,27 +133,28 @@ func (app *Application) Start() error {
 	if err := buildBundles(container, sorted...); err != nil {
 		return err
 	}
-	var dispatcher Dispatcher
-	has, err := container.Has(&dispatcher)
+	// resolve Logger from container
+	// if Logger not found it will remain std
+	provideLogger := false
+	switch err := container.Resolve(&app.Logger); {
+	case errors.Is(err, di.ErrTypeNotExists):
+		provideLogger = true
+	case err != nil:
+		return err
+	}
+	if provideLogger {
+		if err := container.ProvideValue(app.Logger, di.As(new(Logger))); err != nil {
+			return err
+		}
+	}
+	// check dispatcher exists
+	var dispatchers []Dispatcher
+	has, err := container.Has(&dispatchers)
 	if err != nil {
 		return err
 	}
 	if !has {
-		return fmt.Errorf("slice.Dispatcher not found")
-	}
-	// resolve Logger from container
-	// if Logger not found it will remain std
-	forceLoggerProvide := false
-	switch err := container.Resolve(&app.Logger); {
-	case errors.Is(err, di.ErrTypeNotExists):
-		forceLoggerProvide = true
-	case err != nil:
-		return err
-	}
-	if forceLoggerProvide {
-		if err := container.ProvideValue(app.Logger, di.As(new(Logger))); err != nil {
-			return err
-		}
+		return fmt.Errorf("no one slice.Dispatcher found")
 	}
 	// start goroutine with os signal catch
 	go app.catchSignals()
@@ -173,7 +174,6 @@ func (app *Application) Start() error {
 	}
 	app.Logger.Printf("Start")
 	// resolve dispatchers
-	var dispatchers []Dispatcher
 	if err := container.Resolve(&dispatchers); err != nil {
 		return fmt.Errorf("dispatch failed: %w", err)
 	}
