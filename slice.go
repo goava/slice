@@ -121,11 +121,11 @@ func (app *Application) Start() error {
 		return nil
 	}
 	// parameter parser decorator, implemented for lazy parameter loading
-	decorator := func(pointer di.Value) error {
+	parseParameters := func(pointer di.Value) error {
 		return app.ParameterParser.Parse(app.Prefix, pointer)
 	}
 	for _, parameter := range parameters {
-		if err := container.ProvideValue(parameter, di.Decorate(decorator)); err != nil {
+		if err := container.ProvideValue(parameter, di.Decorate(parseParameters)); err != nil {
 			return fmt.Errorf("provide parameter failed; %w", err)
 		}
 	}
@@ -143,7 +143,14 @@ func (app *Application) Start() error {
 	}
 	// resolve Logger from container
 	// if Logger not found it will remain std
-	if err = container.Resolve(&app.Logger); errors.Is(err, di.ErrTypeNotExists) {
+	forceLoggerProvide := false
+	switch err := container.Resolve(&app.Logger); {
+	case errors.Is(err, di.ErrTypeNotExists):
+		forceLoggerProvide = true
+	case err != nil:
+		return err
+	}
+	if forceLoggerProvide {
 		if err := container.ProvideValue(app.Logger, di.As(new(Logger))); err != nil {
 			return err
 		}
@@ -165,9 +172,14 @@ func (app *Application) Start() error {
 		printStartError(err)
 	}
 	app.Logger.Printf("Start")
-	// run application, ignore context cancel error
+	// resolve dispatchers
+	var dispatchers []Dispatcher
+	if err := container.Resolve(&dispatchers); err != nil {
+		return fmt.Errorf("dispatch failed: %w", err)
+	}
+	// dispatch application, ignore context cancel error
 	// default context lifecycle used for application shutdown
-	if err := run(ctx, container); err != nil && !errors.Is(err, context.Canceled) {
+	if err := dispatch(ctx, stop, dispatchers); err != nil && !errors.Is(err, context.Canceled) {
 		return err
 	}
 	app.Logger.Printf("Stop")

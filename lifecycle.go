@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/goava/di"
+	"github.com/oklog/run"
 )
 
 // createContainer is a step of application bootstrap. It collects user dependency injection
@@ -71,15 +73,22 @@ func beforeStart(ctx context.Context, container *di.Container, bundles ...Bundle
 	return after, nil
 }
 
-// run is a part of application lifecycle. It resolves application dispatcher via container and call Run() method.
-func run(ctx context.Context, container *di.Container) error {
-	// resolve dispatcher
-	var dispatcher Dispatcher
-	if err := container.Resolve(&dispatcher); err != nil {
-		return fmt.Errorf("resolve dispatcher failed: %w", err)
+// dispatch is a part of application lifecycle. It resolves application dispatcher via container and call Run() method.
+func dispatch(ctx context.Context, stop func(), dispatchers []Dispatcher) error {
+	var once sync.Once
+	interrupt := func(err error) {
+		once.Do(stop)
 	}
-	// dispatcher run
-	if err := dispatcher.Run(ctx); err != nil {
+	// start all dispatchers
+	var workers run.Group
+	for _, d := range dispatchers {
+		dispatcher := d
+		execute := func() error {
+			return dispatcher.Run(ctx)
+		}
+		workers.Add(execute, interrupt)
+	}
+	if err := workers.Run(); err != nil {
 		return fmt.Errorf("failure: %w", err)
 	}
 	return nil
