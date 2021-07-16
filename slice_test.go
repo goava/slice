@@ -30,7 +30,7 @@ func TestInitializationErrors(t *testing.T) {
 	})
 
 	t.Run("application name must be specified", func(t *testing.T) {
-		logger := &testcmp.Logger{}
+		logger := &testcmp.Log{}
 		require.PanicsWithValue(t, "fatal interruption", func() {
 			slice.Run(
 				slice.WithLogger(logger),

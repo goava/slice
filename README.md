@@ -84,7 +84,7 @@ slice.Run(
 
 ### Initialization
 
-- Initializes StdLogger
+- Initializes `slice.StdLogger`
 - Checks application name
 - Initializes `slice.Context`
 - Parses environment variables:

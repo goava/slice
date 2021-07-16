@@ -1,23 +1,20 @@
 package testcmp
 
-import (
-	"fmt"
-	"log"
-)
+import "fmt"
 
-type Log struct {
+type FmtLog struct {
 	PrintLogs []string
 	FatalLogs []string
 }
 
-func (l *Log) Printf(format string, values ...interface{}) {
+func (l *FmtLog) Printf(format string, values ...interface{}) {
 	s := fmt.Sprintf(format, values...)
 	l.PrintLogs = append(l.PrintLogs, s)
-	log.Printf(s)
+	fmt.Printf(s)
 }
 
-func (l *Log) Fatal(err error) {
+func (l *FmtLog) Fatal(err error) {
 	l.FatalLogs = append(l.FatalLogs, err.Error())
-	log.Printf(err.Error())
+	fmt.Printf(err.Error())
 	panic("fatal interruption")
 }

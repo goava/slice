@@ -43,7 +43,10 @@ type state int
 const (
 	none state = iota
 	initialization
-	building
+	configuring
+	starting
+	running
+	shutdown
 )
 
 // Application is a control part of application.
@@ -69,6 +72,7 @@ type Application struct {
 // Start starts application.
 func (app *Application) Start() error {
 	// STATE: INITIALIZATION
+	app.state = initialization
 	if app.Logger == nil {
 		app.Logger = &stdLogger{} // std logger logs messages before container initialization
 	}
@@ -112,6 +116,7 @@ func (app *Application) Start() error {
 		return fmt.Errorf("initialization: %w", err)
 	}
 	// STATE: CONFIGURING
+	app.state = configuring
 	if app.ParameterParser == nil {
 		err = container.Resolve(&app.ParameterParser)
 		if err != nil && !errors.Is(err, di.ErrTypeNotExists) {
@@ -160,6 +165,7 @@ func (app *Application) Start() error {
 		return fmt.Errorf("configuring: logger: %w", err)
 	}
 	// STATE: STARTING
+	app.state = starting
 	var dispatchers []Dispatcher
 	has, err := container.Has(&dispatchers)
 	if err != nil {
@@ -197,12 +203,14 @@ func (app *Application) Start() error {
 		return fmt.Errorf("dispatch failed: %w", err)
 	}
 	// STATE: RUNNING
+	app.state = running
 	// dispatch application, ignore context cancel error
 	// default context lifecycle used for application shutdown
 	if err := dispatch(ctx, stop, dispatchers); err != nil && !errors.Is(err, context.Canceled) {
 		return err
 	}
 	// STATE: SHUTDOWN
+	app.state = shutdown
 	app.Logger.Printf("Stop")
 	// create context for shutdown
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), app.ShutdownTimeout)
