@@ -2,17 +2,21 @@ package slice
 
 import (
 	"fmt"
-
-	"github.com/goava/di"
 )
 
 // A Bundle  is a separate unit of application.
 type Bundle struct {
 	Name       string
 	Parameters []Parameter
-	Components []di.Option
+	Components []ComponentOption
 	Hooks      []Hook
 	Bundles    []Bundle
+}
+
+func (b Bundle) apply(app *Application) {
+	for _, option := range b.Components {
+		option.apply(app)
+	}
 }
 
 type startErrors []error

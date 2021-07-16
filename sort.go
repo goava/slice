@@ -5,8 +5,8 @@ const (
 	permanent = 2
 )
 
-// sortBundles is a step of application bootstrap.
-func sortBundles(bundles []Bundle) ([]Bundle, bool) {
+// prepareBundles is a step of application bootstrap.
+func prepareBundles(bundles []Bundle) ([]Bundle, bool) {
 	var sorted []Bundle
 	marks := map[string]int{}
 	for _, b := range bundles {

@@ -34,8 +34,8 @@ var Bundle = bundle.New(
 		DefaultParameters(),
 	),
 	bundle.WithComponents(
-		di.Provide(NewHTTPServer),
-		di.Provide(http.NewServeMux, di.As(new(http.Handler))),
+		slice.Provide(NewHTTPServer),
+		slice.Provide(http.NewServeMux, di.As(new(http.Handler))),
 	),
 	bundle.WithHooks(
 		slice.Hook{

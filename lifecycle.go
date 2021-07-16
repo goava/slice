@@ -21,17 +21,6 @@ func createContainer(diopts ...di.Option) (*di.Container, error) {
 	return container, nil
 }
 
-// buildBundles is a step of application bootstrap. It iterates over all registered bundles and
-// builds their dependencies. Build errors will be combined into one by containerBuilder.
-func buildBundles(container *di.Container, bundles ...Bundle) error {
-	for _, bundle := range bundles {
-		if err := container.Apply(bundle.Components...); err != nil {
-			return fmt.Errorf("build %s bundle failed: %w", bundle.Name, err)
-		}
-	}
-	return nil
-}
-
 // before is a step of application bootstrap. It iterates over all registered bundles and call their Boot()
 // method. If bundle boot are success shutdown function will be returned in shutdowns. In case, that boot
 // failed process of booting application will be stopped.

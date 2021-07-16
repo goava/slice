@@ -38,116 +38,128 @@ func New(options ...Option) *Application {
 	return &s
 }
 
+type state int
+
+const (
+	none state = iota
+	initialization
+	building
+)
+
 // Application is a control part of application.
 type Application struct {
 	Name            string
-	Env             Env
-	Debug           bool
 	Prefix          string
 	Parameters      []Parameter
-	Components      []di.Option
 	Dispatcher      Dispatcher
 	Bundles         []Bundle
 	StartTimeout    time.Duration
-	StopTimeout     time.Duration
+	ShutdownTimeout time.Duration
 	Logger          Logger
 	ParameterParser ParameterParser
 
-	stop func()
+	// providers contains type providers. Only slice.Provide() and slice.Supply() works.
+	providers []di.Option
+	env       Env
+	debug     bool
+	state     state
+	stop      func()
 }
 
 // Start starts application.
 func (app *Application) Start() error {
-	// set defaults
+	// STATE: INITIALIZATION
 	if app.Logger == nil {
-		app.Logger = &stdLogger{}
+		app.Logger = &stdLogger{} // std logger logs messages before container initialization
 	}
-	if app.ParameterParser == nil {
-		app.ParameterParser = &stdParameterParser{}
-	}
-	if app.StartTimeout == 0 {
-		app.StartTimeout = defaultTimeout
-	}
-	if app.StopTimeout == 0 {
-		app.StopTimeout = defaultTimeout
-	}
-	// check application name
 	if len(app.Name) == 0 {
 		return fmt.Errorf("application name must be specified, see slice.SetName() option")
 	}
-	// lookup environment
-	env, _ := lookupEnv(defaultEnv)
-	app.Env = parseEnv(env)
-	if debug, ok := lookupEnv(defaultDebug); ok {
-		app.Debug = strings.ToLower(debug) == "true"
-	}
 	// initialize context
 	base, stop := context.WithCancel(context.Background())
-	ctx := NewContext(base)
-	// store context cancel
 	app.stop = stop
+	ctx := NewContext(base)
+	// lookup environment
+	env, _ := lookupEnv(defaultEnv)
+	app.env = parseEnv(env)
+	if debug, ok := lookupEnv(defaultDebug); ok {
+		app.debug = strings.ToLower(debug) == "true"
+	}
+	// build app info
 	info := Info{
 		Name:  app.Name,
-		Env:   app.Env,
-		Debug: app.Debug,
+		Env:   app.env,
+		Debug: app.debug,
 	}
-	// add application context and info
-	components := append(app.Components,
-		di.Provide(func() *Context { return ctx }, di.As(new(context.Context))),
-		di.Provide(func() Info { return info }),
-	)
-	// sort bundles
-	sorted, ok := sortBundles(app.Bundles)
+	// check bundle acyclic and sort dependencies
+	sorted, ok := prepareBundles(app.Bundles)
 	if !ok {
 		return fmt.Errorf("bundle cyclic detected") // todo: improve error message
 	}
-	// create dependency injection container
-	container, err := createContainer(components...)
-	if err != nil {
-		return err
+	// prepare bundle components
+	for _, bundle := range sorted {
+		bundle.apply(app)
 	}
+	// prepare application components
+	providers := []di.Option{
+		di.Provide(func() *Context { return ctx }, di.As(new(context.Context))),
+		di.Provide(func() Info { return info }),
+	}
+	providers = append(providers, app.providers...)
+	// validate container with all application components
+	container, err := createContainer(providers...)
+	if err != nil {
+		return fmt.Errorf("initialization: %w", err)
+	}
+	// STATE: CONFIGURING
+	if app.ParameterParser == nil {
+		err = container.Resolve(&app.ParameterParser)
+		if err != nil && !errors.Is(err, di.ErrTypeNotExists) {
+			return fmt.Errorf("configuring: parameter parser: %w", err)
+		}
+		if err != nil && errors.Is(err, di.ErrTypeNotExists) {
+			app.ParameterParser = &stdParameterParser{}
+		}
+	}
+	// collect application parameters
 	parameters := app.Parameters
 	// add bundle parameters
 	for _, bundle := range sorted {
 		parameters = append(parameters, bundle.Parameters...)
 	}
+	// check parameters
 	var parametersFlag bool
 	flag.BoolVar(&parametersFlag, "parameters", false, "Display parameters information")
 	flag.Parse()
 	if parametersFlag {
 		if err := app.ParameterParser.Usage(app.Prefix, parameters...); err != nil {
-			return err
+			return fmt.Errorf("configuring: usage: %w", err)
 		}
 		return nil
 	}
 	// parameter parser decorator, implemented for lazy parameter loading
 	parseParameters := func(pointer di.Value) error {
-		return app.ParameterParser.Parse(app.Prefix, pointer)
+		if err := app.ParameterParser.Parse(app.Prefix, pointer); err != nil {
+			return fmt.Errorf("configuring: parse: %w", err)
+		}
+		return nil
 	}
 	for _, parameter := range parameters {
 		if err := container.ProvideValue(parameter, di.Decorate(parseParameters)); err != nil {
-			return fmt.Errorf("provide parameter failed; %w", err)
+			return fmt.Errorf("configuring: parameters: %w", err)
 		}
 	}
-	// build bundle dependencies
-	if err := buildBundles(container, sorted...); err != nil {
-		return err
-	}
-	// resolve Logger from container
-	// if Logger not found it will remain std
-	provideLogger := false
-	switch err := container.Resolve(&app.Logger); {
-	case errors.Is(err, di.ErrTypeNotExists):
-		provideLogger = true
-	case err != nil:
-		return err
-	}
-	if provideLogger {
+	// resolve logger
+	err = container.Resolve(&app.Logger)
+	if err != nil && errors.Is(err, di.ErrTypeNotExists) {
 		if err := container.ProvideValue(app.Logger, di.As(new(Logger))); err != nil {
-			return err
+			return fmt.Errorf("configuring: logger: %w", err)
 		}
 	}
-	// check dispatcher exists
+	if err != nil && !errors.Is(err, di.ErrTypeNotExists) {
+		return fmt.Errorf("configuring: logger: %w", err)
+	}
+	// STATE: STARTING
 	var dispatchers []Dispatcher
 	has, err := container.Has(&dispatchers)
 	if err != nil {
@@ -155,6 +167,13 @@ func (app *Application) Start() error {
 	}
 	if !has {
 		return fmt.Errorf("no one slice.Dispatcher found")
+	}
+	// set timeouts
+	if app.StartTimeout == 0 {
+		app.StartTimeout = defaultTimeout
+	}
+	if app.ShutdownTimeout == 0 {
+		app.ShutdownTimeout = defaultTimeout
 	}
 	// start goroutine with os signal catch
 	go app.catchSignals()
@@ -165,7 +184,7 @@ func (app *Application) Start() error {
 	// if boot failed shutdown booted bundles
 	if err != nil {
 		// create context for shutdown
-		shutdownCtx, cancel := context.WithTimeout(context.Background(), app.StopTimeout)
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), app.ShutdownTimeout)
 		defer cancel()
 		if rserr := beforeShutdown(shutdownCtx, container, hooks); rserr != nil {
 			return fmt.Errorf("%w (%s)", err, rserr)
@@ -177,14 +196,16 @@ func (app *Application) Start() error {
 	if err := container.Resolve(&dispatchers); err != nil {
 		return fmt.Errorf("dispatch failed: %w", err)
 	}
+	// STATE: RUNNING
 	// dispatch application, ignore context cancel error
 	// default context lifecycle used for application shutdown
 	if err := dispatch(ctx, stop, dispatchers); err != nil && !errors.Is(err, context.Canceled) {
 		return err
 	}
+	// STATE: SHUTDOWN
 	app.Logger.Printf("Stop")
 	// create context for shutdown
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), app.StopTimeout)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), app.ShutdownTimeout)
 	defer cancel()
 	// shutdown bundles in reverse order
 	if err = beforeShutdown(shutdownCtx, container, hooks); err != nil {

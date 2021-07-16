@@ -6,7 +6,7 @@ Slice (Work in progress)
 [![Build Status](https://img.shields.io/travis/goava/slice.svg?style=for-the-badge&logo=travis)](https://travis-ci.org/goava/slice)
 [![Code Coverage](https://img.shields.io/codecov/c/github/goava/slice.svg?style=for-the-badge&logo=codecov)](https://codecov.io/gh/goava/slice)
 
-## Problem
+# Problem
 
 During the process of writing software in the team, you develop a
 certain style and define standards that meet the requirements for this
@@ -16,7 +16,7 @@ our approach based on
 and
 [modular programming](https://en.wikipedia.org/wiki/Modular_programming).
 
-## Overview
+# Overview
 
 ```go
 package main
@@ -43,11 +43,11 @@ func main() {
 }
 ```
 
-## Minimal start
+# Minimal start
 
 The minimum that you need to run the application on `slice`.
 
-### Set application name
+## Set application name
 
 Use `slice.WithName("your name")` to specify the application name.
 
@@ -58,14 +58,14 @@ slice.Run(
 )
 ```
 
-### Check application environment
+## Check application environment
 
 Use environment variable `ENV` to specify the application environment.
 The value can be any string. Environments that have a prefix `dev` will
 be recognized as a development environment. Others will be recognized as
 production.
 
-### Provide application dispatcher
+## Provide application dispatcher
 
 Provide your own `slice.Dispatcher` implementation:
 
@@ -78,7 +78,69 @@ slice.Run(
 )
 ```
 
-## Lifecycle
+# How it works
+
+## Application lifecycle
+
+### Initialization
+
+- Initializes StdLogger
+- Checks application name
+- Initializes `slice.Context`
+- Parses environment variables:
+  - `ENV`
+  - `DEBUG`
+- Initializes `slice.Info`
+- Checks bundle acyclic and sort dependencies
+- Validates component signatures
+
+### Configuring
+
+- Resolves `slice.ParameterParser`
+- Collects parameters
+- Checks `--parameters` flag
+- Provides parameters
+- Resolves `slice.Logger`
+
+### Starting
+
+- Check dispatchers exists
+- Sets `StartTimeout` and `ShutdownTimeout`
+- Runs interrupt signal catcher
+- Invokes `BeforeStart` bundle hooks
+- Resolves dispatchers
+
+### Running
+
+- Runs dispatchers
+
+### Shutdown
+
+- Invokes `BeforeShutdown` bundle hooks.
+
+# Components
+
+## Default components
+
+### `slice.Context`
+
+A Context carries a deadline, a cancellation signal, and other values
+across API boundaries.
+
+### `slice.Info`
+
+Info contains information about application: name, env, debug.
+
+## User components
+
+TBD
+
+## Bundle components
+
+TBD
+
+
+# Lifecycle
 
 - Initialize slice variables and components:
   - `slice.Info`: Application information: name, env and debug flag

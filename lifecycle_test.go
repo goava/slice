@@ -34,52 +34,6 @@ func TestLifecycle_createContainer(t *testing.T) {
 	})
 }
 
-func TestLifecycle_buildBundles(t *testing.T) {
-	t.Run("bundle components provided in correct order", func(t *testing.T) {
-		c, err := di.New()
-		require.NoError(t, err)
-		var order []string
-		first := Bundle{
-			Name: "first-bundle",
-			Components: []di.Option{
-				di.Invoke(func() {
-					order = append(order, "first")
-				}),
-			},
-		}
-		second := Bundle{
-			Name: "second-bundle",
-			Components: []di.Option{
-				di.Invoke(func() {
-					order = append(order, "second")
-				}),
-			},
-		}
-		err = buildBundles(c, first, second)
-		require.NoError(t, err)
-		require.Equal(t, []string{"first", "second"}, order)
-	})
-
-	t.Run("bundle build error return as one", func(t *testing.T) {
-		c, err := di.New()
-		require.NoError(t, err)
-		errorBundle := Bundle{
-			Name: "error-bundle",
-			Components: []di.Option{
-				di.Provide(func() {}),
-				di.Provide(nil),
-				di.Provide(struct{}{}),
-			},
-		}
-		err = buildBundles(c, errorBundle)
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "build error-bundle bundle failed:")
-		require.Contains(t, err.Error(), "invalid constructor signature, got func()")
-		// require.Contains(t, err.Error(), "invalid constructor signature, got nil")
-		// require.Contains(t, err.Error(), "invalid constructor signature, got struct {}")
-	})
-}
-
 func TestLifecycle_before(t *testing.T) {
 	t.Run("iterates over bundles and run before hook", func(t *testing.T) {
 		c, err := di.New()

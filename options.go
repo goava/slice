@@ -2,8 +2,6 @@ package slice
 
 import (
 	"time"
-
-	"github.com/goava/di"
 )
 
 // Option configure slice.
@@ -34,11 +32,12 @@ func WithBundles(bundles ...Bundle) Option {
 	})
 }
 
-// WithComponents configures the dependency injection container. It saves container options for the compile stage.
-// On compile stage they will be applied on container.
-func WithComponents(components ...di.Option) Option {
+// WithComponents contains component options.
+func WithComponents(components ...ComponentOption) Option {
 	return option(func(s *Application) {
-		s.Components = append(s.Components, components...)
+		for _, c := range components {
+			c.apply(s)
+		}
 	})
 }
 
@@ -49,6 +48,13 @@ func WithParameterParser(parser ParameterParser) Option {
 	})
 }
 
+// WithLogger sets application logger.
+func WithLogger(logger Logger) Option {
+	return option(func(s *Application) {
+		s.Logger = logger
+	})
+}
+
 // StartTimeout sets application boot timeout.
 func StartTimeout(timeout time.Duration) Option {
 	return option(func(s *Application) {
@@ -56,10 +62,10 @@ func StartTimeout(timeout time.Duration) Option {
 	})
 }
 
-// StopTimeout sets application shutdown timeout.
-func StopTimeout(timeout time.Duration) Option {
+// ShutdownTimeout sets application shutdown timeout.
+func ShutdownTimeout(timeout time.Duration) Option {
 	return option(func(s *Application) {
-		s.StopTimeout = timeout
+		s.ShutdownTimeout = timeout
 	})
 }
 

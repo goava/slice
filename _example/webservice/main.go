@@ -17,7 +17,7 @@ func main() {
 			httpsrv.Bundle,
 		),
 		slice.WithComponents(
-			di.Provide(NewDispatcher, di.As(new(slice.Dispatcher))),
+			slice.Provide(NewDispatcher, di.As(new(slice.Dispatcher))),
 		),
 	)
 }
