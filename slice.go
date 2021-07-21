@@ -169,6 +169,8 @@ func (app *Application) Start() error {
 	if err != nil && !errors.Is(err, di.ErrTypeNotExists) {
 		return fmt.Errorf("configuring: logger: %w", err)
 	}
+	app.Logger.Printf("slice", "Environment: %s", app.env)
+	app.Logger.Printf("slice", "Debug: %t", app.debug)
 	// STATE: STARTING
 	app.state = starting
 	var dispatchers []Dispatcher
