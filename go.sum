@@ -4,6 +4,8 @@ github.com/goava/di v1.9.1-0.20210421132345-a9c040a74336 h1:ZcX/7OhVriRZEjG0X2GS
 github.com/goava/di v1.9.1-0.20210421132345-a9c040a74336/go.mod h1:ToepvYlpTdC7DrFggmv/TyKIuezBLvAXlRxJkOvtemo=
 github.com/goava/di v1.9.1-0.20210616194348-9564556bca81 h1:qnsdEv+pkOkaKp5ICeRxlJrH6DXw//b6+g19L3JP+W8=
 github.com/goava/di v1.9.1-0.20210616194348-9564556bca81/go.mod h1:ToepvYlpTdC7DrFggmv/TyKIuezBLvAXlRxJkOvtemo=
+github.com/goava/di v1.11.0 h1:jqVukZA9CbuG3AOfhXy31T3sk8ACBn6R3KZ/FRJOckQ=
+github.com/goava/di v1.11.0/go.mod h1:ToepvYlpTdC7DrFggmv/TyKIuezBLvAXlRxJkOvtemo=
 github.com/kelseyhightower/envconfig v1.4.0 h1:Im6hONhd3pLkfDFsbRgu68RDNkGF1r3dvMUtDTo2cv8=
 github.com/kelseyhightower/envconfig v1.4.0/go.mod h1:cccZRl6mQpaq41TPp5QxidR+Sa3axMbJDNb//FQX6Gg=
 github.com/oklog/run v1.1.0 h1:GEenZ1cK0+q0+wsJew9qUg/DyD8k3JzYsZAi5gYi2mA=
