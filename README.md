@@ -119,41 +119,6 @@ slice.Run(
 
 - Invokes `BeforeShutdown` bundle hooks in reverse order
 
-# Components
-
-## Default components
-
-### `slice.Context`
-
-A Context carries a deadline, a cancellation signal, and other values
-across API boundaries.
-
-### `slice.Info`
-
-Info contains information about application: name, env, debug.
-
-## User components
-
-TBD
-
-## Bundle components
-
-TBD
-
-
-# Lifecycle
-
-- Initialize slice variables and components:
-  - `slice.Info`: Application information: name, env and debug flag
-  - `slice.Context`: Application context
-  - `slice.Logger`: System logger (default: `stdout`)
-  - `slice.ParameterParser`: Application parameter parser (default:
-    `envconfig`)
-- Create the container with user and slice components
-- Parse all parameters (with bundle parameters)
-- Invoke `BeforeStart` bundles hook
-- Run dispatcher
-- Invoke `BeforeShutdown` bundles hook
 
 ## Lifecycle details
 
@@ -187,6 +152,27 @@ ADDR             String                 true        Server address
 READ_TIMEOUT     Duration               true        Server read timeout
 WRITE_TIMEOUT    Duration               true        Server write timeout
 ```
+
+# Components
+
+## Default components
+
+### `slice.Context`
+
+A Context carries a deadline, a cancellation signal, and other values
+across API boundaries.
+
+### `slice.Info`
+
+Info contains information about application: name, env, debug.
+
+## User components
+
+TBD
+
+## Bundle components
+
+TBD
 
 ## References
 
