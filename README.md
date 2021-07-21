@@ -36,8 +36,8 @@ func main() {
 			grpc.Bundle,
 		),
 		slice.WithComponents(
-			di.Provide(NewDispatcher, di.As(new(slice.Dispatcher))),
-			di.Provide(grpcsrv.NewService, di.As(new(grpc.Service))),
+			slice.Provide(NewDispatcher, di.As(new(slice.Dispatcher))),
+			slice.Provide(grpcsrv.NewService, di.As(new(grpc.Service))),
 		),
 	)
 }
@@ -73,7 +73,7 @@ Provide your own `slice.Dispatcher` implementation:
 slice.Run(
     slice.WithName("sliced"),
     slice.WithComponents(
-        di.Provide(NewDispatcher, di.As(new(slice.Dispatcher))),
+        slice.Provide(NewDispatcher, di.As(new(slice.Dispatcher))),
     ),
 )
 ```
