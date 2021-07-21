@@ -35,7 +35,7 @@ func visit(b Bundle, marks map[string]int, sorted *[]Bundle) bool {
 	}
 	if len(b.Bundles) == 0 {
 		marks[b.Name] = permanent
-		*sorted = append(*sorted, b)
+		*sorted = append([]Bundle{b}, *sorted...)
 		return true
 	}
 	marks[b.Name] = temporary
@@ -45,6 +45,6 @@ func visit(b Bundle, marks map[string]int, sorted *[]Bundle) bool {
 		}
 	}
 	marks[b.Name] = permanent
-	*sorted = append(*sorted, b)
+	*sorted = append([]Bundle{b}, *sorted...)
 	return true
 }

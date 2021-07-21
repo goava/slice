@@ -103,6 +103,7 @@ func (app *Application) Start() error {
 	}
 	// prepare bundle components
 	for _, bundle := range sorted {
+		fmt.Println(bundle.Name)
 		bundle.apply(app)
 	}
 	// prepare application components

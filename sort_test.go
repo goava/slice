@@ -1,10 +1,21 @@
 package slice
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
+
+type bundleNames []Bundle
+
+func (p bundleNames) Names() []string {
+	var names []string
+	for _, b := range p {
+		names = append(names, b.Name)
+	}
+	return names
+}
 
 func Test_sortBundles(t *testing.T) {
 	t.Run("dependency bundle added to list in correct order", func(t *testing.T) {
@@ -12,7 +23,8 @@ func Test_sortBundles(t *testing.T) {
 		result, err := prepareBundles(bundles)
 		require.NoError(t, err)
 		require.Len(t, result, 4)
-		require.Equal(t, []Bundle{first, second, four, third}, result)
+		require.Equal(t, []Bundle{third, four, second, first}, result)
+		fmt.Println(bundleNames(result).Names())
 	})
 
 	t.Run("duplicate bundles filtered correctly", func(t *testing.T) {
@@ -20,7 +32,8 @@ func Test_sortBundles(t *testing.T) {
 		result, err := prepareBundles(bundles)
 		require.NoError(t, err)
 		require.Len(t, result, 3)
-		require.Equal(t, []Bundle{first, second, four}, result)
+		require.Equal(t, []Bundle{four, second, first}, result)
+		fmt.Println(bundleNames(result).Names())
 	})
 
 	t.Run("chaos check", func(t *testing.T) {
@@ -28,29 +41,30 @@ func Test_sortBundles(t *testing.T) {
 		result, err := prepareBundles(bundles)
 		require.NoError(t, err)
 		require.Len(t, result, 4)
-		require.Equal(t, []Bundle{first, second, four, third}, result)
+		require.Equal(t, []Bundle{third, four, second, first}, result)
+		fmt.Println(bundleNames(result).Names())
 	})
 }
 
 var (
 	first = Bundle{
-		Name: "first-bundle",
+		Name: "1:[]",
 	}
 	second = Bundle{
-		Name: "second-bundle",
+		Name: "2:1",
 		Bundles: []Bundle{
 			first,
 		},
 	}
 	third = Bundle{
-		Name: "third-bundle",
+		Name: "3:2,4",
 		Bundles: []Bundle{
 			second,
 			four,
 		},
 	}
 	four = Bundle{
-		Name: "four-bundle",
+		Name: "4:1",
 		Bundles: []Bundle{
 			first,
 		},

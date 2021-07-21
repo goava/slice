@@ -8,8 +8,4 @@ type Hook struct {
 	BeforeStart di.Invocation
 	// BeforeShutdown invokes function before application shutdown.
 	BeforeShutdown di.Invocation
-	// Deprecated: use BeforeStart
-	Before di.Invocation
-	// Deprecated: use BeforeShutdown
-	After di.Invocation
 }
