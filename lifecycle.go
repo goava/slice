@@ -65,7 +65,7 @@ func dispatch(ctx context.Context, logger Logger, stop func(), dispatchers []Dis
 				return fmt.Errorf("%s: %w", dt, err)
 			}
 			once.Do(func() {
-				logger.Printf("slice", "Terminate signal from %s", dt)
+				logger.Printf("slice", "Terminate signal from %s: %v", dt, ctx.Err())
 				stop()
 			})
 			logger.Printf("slice", "Stopped %s", dt)
