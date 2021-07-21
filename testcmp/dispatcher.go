@@ -4,9 +4,10 @@ import (
 	"context"
 )
 
-type Dispatcher struct {
+type FuncDispatcher struct {
+	RunFunc func(ctx context.Context) error
 }
 
-func (d Dispatcher) Run(ctx context.Context) (err error) {
-	panic("implement me")
+func (d FuncDispatcher) Run(ctx context.Context) (err error) {
+	return d.RunFunc(ctx)
 }

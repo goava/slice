@@ -108,6 +108,7 @@ func (app *Application) Start() error {
 	// prepare application components
 	providers := []di.Option{
 		di.Provide(func() *Context { return ctx }, di.As(new(context.Context))),
+		di.Provide(func() Env { return app.env }),
 		di.Provide(func() Info { return info }),
 	}
 	providers = append(providers, app.providers...)
@@ -133,10 +134,13 @@ func (app *Application) Start() error {
 	for _, bundle := range sorted {
 		parameters = append(parameters, bundle.Parameters...)
 	}
+	// create application flag set
+	fs := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 	// check parameters
 	var parametersFlag bool
-	flag.BoolVar(&parametersFlag, "parameters", false, "Display parameters information")
-	flag.Parse()
+	fs.BoolVar(&parametersFlag, "parameters", false, "Display parameters information")
+	// Ignore errors; CommandLine is set for ExitOnError.
+	_ = fs.Parse(os.Args[1:])
 	if parametersFlag {
 		if err := app.ParameterParser.Usage(app.Prefix, parameters...); err != nil {
 			return fmt.Errorf("configuring: usage: %w", err)

@@ -90,6 +90,7 @@ slice.Run(
 - Parses environment variables:
   - `ENV`
   - `DEBUG`
+- Provide `slice.Env`
 - Initializes `slice.Info`
 - Checks bundle acyclic and sort dependencies
 - Validates component signatures
