@@ -10,7 +10,7 @@ type Log struct {
 	FatalLogs []string
 }
 
-func (l *Log) Printf(format string, values ...interface{}) {
+func (l *Log) Printf(bundle string, format string, values ...interface{}) {
 	s := fmt.Sprintf(format, values...)
 	l.PrintLogs = append(l.PrintLogs, s)
 	log.Printf(s)

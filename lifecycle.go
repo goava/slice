@@ -60,15 +60,15 @@ func dispatch(ctx context.Context, logger Logger, stop func(), dispatchers []Dis
 		dispatcher := d
 		dt := reflect.TypeOf(dispatcher)
 		execute := func() error {
-			logger.Printf("Start %s", dt)
+			logger.Printf("slice", "Start %s", dt)
 			if err := dispatcher.Run(ctx); err != nil {
 				return fmt.Errorf("%s: %w", dt, err)
 			}
 			once.Do(func() {
-				logger.Printf("Terminate signal from %s", dt)
+				logger.Printf("slice", "Terminate signal from %s", dt)
 				stop()
 			})
-			logger.Printf("Stopped %s", dt)
+			logger.Printf("slice", "Stopped %s", dt)
 			return nil
 		}
 		interrupt := func(err error) {

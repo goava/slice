@@ -203,9 +203,9 @@ func (app *Application) Start() error {
 		printStartError(err)
 	}
 	if !info.Env.IsTest() {
-		app.Logger.Printf("Initialization %s", time.Now().Sub(initStart))
+		app.Logger.Printf("slice", "Initialization %s", time.Now().Sub(initStart))
 	}
-	app.Logger.Printf("Starting")
+	app.Logger.Printf("slice", "Starting")
 	// resolve dispatchers
 	if err := container.Resolve(&dispatchers); err != nil {
 		return fmt.Errorf("dispatch failed: %w", err)
@@ -239,6 +239,6 @@ func (app *Application) catchSignals() {
 	stop := make(chan os.Signal)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
 	sign := <-stop
-	app.Logger.Printf(strings.Title(sign.String()))
+	app.Logger.Printf("slice", strings.Title(sign.String()))
 	app.stop()
 }

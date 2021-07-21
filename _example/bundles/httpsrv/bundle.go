@@ -46,9 +46,9 @@ var Bundle = bundle.New(
 
 // NewHTTPServer
 func NewHTTPServer(logger slice.Logger, handler http.Handler, params *Parameters) *http.Server {
-	logger.Printf("Server Addr %s", params.Addr)
-	logger.Printf("Server ReadTimeout %s", params.ReadTimeout)
-	logger.Printf("Server WriteTimeout %s", params.WriteTimeout)
+	logger.Printf("http", "Server Addr %s", params.Addr)
+	logger.Printf("http", "Server ReadTimeout %s", params.ReadTimeout)
+	logger.Printf("http", "Server WriteTimeout %s", params.WriteTimeout)
 	return &http.Server{
 		Addr:         params.Addr,
 		Handler:      handler,
@@ -70,7 +70,7 @@ func RegisterHTTPControllers(logger slice.Logger, container *di.Container, mux *
 		return err
 	}
 	if !has {
-		logger.Printf("Controllers not found")
+		logger.Printf("http", "Controllers not found")
 		return nil
 	}
 	if err := container.Resolve(&controllers); err != nil {

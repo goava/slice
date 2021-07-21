@@ -7,7 +7,7 @@ type FmtLog struct {
 	FatalLogs []string
 }
 
-func (l *FmtLog) Printf(format string, values ...interface{}) {
+func (l *FmtLog) Printf(bundle string, format string, values ...interface{}) {
 	s := fmt.Sprintf(format, values...)
 	l.PrintLogs = append(l.PrintLogs, s)
 	fmt.Println(s)
