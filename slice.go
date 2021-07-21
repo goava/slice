@@ -71,6 +71,7 @@ type Application struct {
 
 // Start starts application.
 func (app *Application) Start() error {
+	initStart := time.Now()
 	// STATE: INITIALIZATION
 	app.state = initialization
 	if app.Logger == nil {
@@ -96,9 +97,9 @@ func (app *Application) Start() error {
 		Debug: app.debug,
 	}
 	// check bundle acyclic and sort dependencies
-	sorted, ok := prepareBundles(app.Bundles)
-	if !ok {
-		return fmt.Errorf("bundle cyclic detected") // todo: improve error message
+	sorted, err := prepareBundles(app.Bundles)
+	if err != nil {
+		return fmt.Errorf("prepare bundles: %w", err)
 	}
 	// prepare bundle components
 	for _, bundle := range sorted {
@@ -197,7 +198,10 @@ func (app *Application) Start() error {
 		}
 		printStartError(err)
 	}
-	app.Logger.Printf("Start")
+	if !info.Env.IsTest() {
+		app.Logger.Printf("Initialization %s", time.Now().Sub(initStart))
+	}
+	app.Logger.Printf("Starting")
 	// resolve dispatchers
 	if err := container.Resolve(&dispatchers); err != nil {
 		return fmt.Errorf("dispatch failed: %w", err)
@@ -206,12 +210,11 @@ func (app *Application) Start() error {
 	app.state = running
 	// dispatch application, ignore context cancel error
 	// default context lifecycle used for application shutdown
-	if err := dispatch(ctx, stop, dispatchers); err != nil && !errors.Is(err, context.Canceled) {
+	if err := dispatch(ctx, app.Logger, stop, dispatchers); err != nil && !errors.Is(err, context.Canceled) {
 		return err
 	}
 	// STATE: SHUTDOWN
 	app.state = shutdown
-	app.Logger.Printf("Stop")
 	// create context for shutdown
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), app.ShutdownTimeout)
 	defer cancel()

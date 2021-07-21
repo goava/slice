@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"testing"
 
-	"github.com/goava/di"
+	"github.com/goava/slice/bundle"
 	"github.com/goava/slice/testcmp"
 	"github.com/stretchr/testify/require"
 
@@ -39,18 +39,32 @@ func TestInitializationErrors(t *testing.T) {
 		require.Len(t, logger.FatalLogs, 1, "logger should have 1 fatal message")
 		require.Equal(t, "application name must be specified, see slice.SetName() option", logger.FatalLogs[0])
 	})
-}
 
-func TestRun(t *testing.T) {
-	t.Run("full example", func(t *testing.T) {
+	t.Run("bundle without name cause error", func(t *testing.T) {
+		logger := &testcmp.FmtLog{}
 		slice.Run(
-			slice.WithName("test_run"),
-			slice.WithComponents(
-				slice.Provide(NewTestDispatcher, di.As(new(slice.Dispatcher))),
-			),
+			slice.WithName("app"),
+			slice.WithLogger(logger),
+			slice.WithBundles(bundle.New()),
 		)
+		require.Len(t, logger.FatalLogs, 1)
+		require.Equal(t, "prepare bundles: bundle with index 0: empty name", logger.FatalLogs[0])
 	})
 }
+
+//
+//func TestRun(t *testing.T) {
+//	t.Run("full example", func(t *testing.T) {
+//		catcher := bundle.New()
+//
+//		slice.Run(
+//			slice.WithName("test_run"),
+//			slice.WithComponents(
+//				slice.Provide(NewTestDispatcher, di.As(new(slice.Dispatcher))),
+//			),
+//		)
+//	})
+//}
 
 type TestDispatcher struct {
 }

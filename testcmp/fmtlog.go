@@ -10,11 +10,11 @@ type FmtLog struct {
 func (l *FmtLog) Printf(format string, values ...interface{}) {
 	s := fmt.Sprintf(format, values...)
 	l.PrintLogs = append(l.PrintLogs, s)
-	fmt.Printf(s)
+	fmt.Println(s)
 }
 
 func (l *FmtLog) Fatal(err error) {
 	l.FatalLogs = append(l.FatalLogs, err.Error())
-	fmt.Printf(err.Error())
-	panic("fatal interruption")
+	fmt.Println(err.Error())
+	//panic("fatal interruption")
 }

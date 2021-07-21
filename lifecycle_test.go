@@ -43,16 +43,16 @@ func TestLifecycle_before(t *testing.T) {
 		firstBundle := Bundle{
 			Name: "first-bundle",
 			Hooks: []Hook{{
-				Before: func() {
+				BeforeStart: func() {
 					order = append(order, "first-bundle")
 				},
-				After: func() {},
+				BeforeShutdown: func() {},
 			}},
 		}
 		secondBundle := Bundle{
 			Name: "second-bundle",
 			Hooks: []Hook{{
-				Before: func() {
+				BeforeStart: func() {
 					order = append(order, "second-bundle")
 				},
 			}},
@@ -70,7 +70,7 @@ func TestLifecycle_before(t *testing.T) {
 		bundle := Bundle{
 			Name: "error-bundle",
 			Hooks: []Hook{{
-				Before: func() error { return errors.New("unexpected error") },
+				BeforeStart: func() error { return errors.New("unexpected error") },
 			}},
 		}
 		hooks, err := beforeStart(context.Background(), c, bundle)
@@ -85,7 +85,7 @@ func TestLifecycle_before(t *testing.T) {
 		firstBundle := Bundle{
 			Name: "first-bundle",
 			Hooks: []Hook{{
-				Before: func() error {
+				BeforeStart: func() error {
 					time.Sleep(2 * time.Millisecond)
 					return nil
 				},
@@ -94,7 +94,7 @@ func TestLifecycle_before(t *testing.T) {
 		secondBundle := Bundle{
 			Name: "second-bundle",
 			Hooks: []Hook{{
-				Before: func() {},
+				BeforeStart: func() {},
 			}},
 		}
 
@@ -114,7 +114,7 @@ func TestLifecycle_dispatch(t *testing.T) {
 			},
 		}
 		ctx, cancel := context.WithCancel(context.Background())
-		err := dispatch(ctx, cancel, []Dispatcher{dispatcher})
+		err := dispatch(ctx, &stdLogger{}, cancel, []Dispatcher{dispatcher})
 		require.NoError(t, err)
 		require.Len(t, dispatcher.RunCalls(), 1)
 	})
@@ -153,8 +153,8 @@ func TestLifecycle_dispatch(t *testing.T) {
 		}
 
 		ctx, cancel := context.WithCancel(context.Background())
-		err := dispatch(ctx, cancel, []Dispatcher{d1, d2})
-		require.EqualError(t, err, "failure: unexpected error")
+		err := dispatch(ctx, &stdLogger{}, cancel, []Dispatcher{d1, d2})
+		require.EqualError(t, err, "failure: *slice.DispatcherMock: unexpected error")
 		require.Len(t, d1.RunCalls(), 1)
 		require.True(t, contextCancelled)
 	})

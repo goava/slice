@@ -9,24 +9,24 @@ import (
 func Test_sortBundles(t *testing.T) {
 	t.Run("dependency bundle added to list in correct order", func(t *testing.T) {
 		bundles := []Bundle{third}
-		result, valid := prepareBundles(bundles)
-		require.True(t, valid)
+		result, err := prepareBundles(bundles)
+		require.NoError(t, err)
 		require.Len(t, result, 4)
 		require.Equal(t, []Bundle{first, second, four, third}, result)
 	})
 
 	t.Run("duplicate bundles filtered correctly", func(t *testing.T) {
 		bundles := []Bundle{first, second, four}
-		result, valid := prepareBundles(bundles)
-		require.True(t, valid)
+		result, err := prepareBundles(bundles)
+		require.NoError(t, err)
 		require.Len(t, result, 3)
 		require.Equal(t, []Bundle{first, second, four}, result)
 	})
 
 	t.Run("chaos check", func(t *testing.T) {
 		bundles := []Bundle{first, second, third, first, second, third, first, second, first, second}
-		result, valid := prepareBundles(bundles)
-		require.True(t, valid)
+		result, err := prepareBundles(bundles)
+		require.NoError(t, err)
 		require.Len(t, result, 4)
 		require.Equal(t, []Bundle{first, second, four, third}, result)
 	})

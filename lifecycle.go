@@ -3,6 +3,7 @@ package slice
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"strings"
 	"sync"
 
@@ -31,18 +32,6 @@ func beforeStart(ctx context.Context, container *di.Container, bundles ...Bundle
 			return after, fmt.Errorf("boot %s bundle failed: %w", bundle.Name, err)
 		}
 		for _, h := range bundle.Hooks {
-			// todo: remove in next versions
-			if h.Before != nil {
-				if err := container.Invoke(h.Before); err != nil {
-					errs = append(errs, fmt.Errorf("boot %s bundle failed: %w", bundle.Name, err))
-				}
-				if h.After != nil {
-					after = append(after, hook{
-						name: bundle.Name,
-						hook: h.After,
-					})
-				}
-			}
 			if h.BeforeStart != nil {
 				if err := container.Invoke(h.BeforeStart); err != nil {
 					errs = append(errs, fmt.Errorf("boot %s bundle failed: %w", bundle.Name, err))
@@ -63,17 +52,29 @@ func beforeStart(ctx context.Context, container *di.Container, bundles ...Bundle
 }
 
 // dispatch is a part of application lifecycle. It resolves application dispatcher via container and call Run() method.
-func dispatch(ctx context.Context, stop func(), dispatchers []Dispatcher) error {
+func dispatch(ctx context.Context, logger Logger, stop func(), dispatchers []Dispatcher) error {
 	var once sync.Once
-	interrupt := func(err error) {
-		once.Do(stop)
-	}
 	// start all dispatchers
 	var workers run.Group
 	for _, d := range dispatchers {
 		dispatcher := d
+		dt := reflect.TypeOf(dispatcher)
 		execute := func() error {
-			return dispatcher.Run(ctx)
+			logger.Printf("Start %s", dt)
+			if err := dispatcher.Run(ctx); err != nil {
+				return fmt.Errorf("%s: %w", dt, err)
+			}
+			once.Do(func() {
+				logger.Printf("Terminate signal from %s", dt)
+				stop()
+			})
+			logger.Printf("Stopped %s", dt)
+			return nil
+		}
+		interrupt := func(err error) {
+			once.Do(func() {
+				stop()
+			})
 		}
 		workers.Add(execute, interrupt)
 	}

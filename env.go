@@ -7,6 +7,7 @@ import (
 
 const (
 	envDev  string = "dev"
+	envTest string = "test"
 	envProd string = "prod"
 )
 
@@ -30,4 +31,9 @@ func (e Env) String() string {
 // IsDev is a helper function to check whether app is running in Dev mode
 func (e Env) IsDev() bool {
 	return strings.HasPrefix(strings.ToLower(string(e)), envDev)
+}
+
+// IsTest is a helper function to check whether app is running in Dev mode
+func (e Env) IsTest() bool {
+	return strings.HasPrefix(strings.ToLower(string(e)), envTest)
 }

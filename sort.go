@@ -1,20 +1,27 @@
 package slice
 
+import (
+	"fmt"
+)
+
 const (
 	temporary = 1
 	permanent = 2
 )
 
 // prepareBundles is a step of application bootstrap.
-func prepareBundles(bundles []Bundle) ([]Bundle, bool) {
+func prepareBundles(bundles []Bundle) ([]Bundle, error) {
 	var sorted []Bundle
 	marks := map[string]int{}
-	for _, b := range bundles {
+	for i, b := range bundles {
+		if b.Name == "" {
+			return nil, fmt.Errorf("bundle with index %d: empty name", i)
+		}
 		if !visit(b, marks, &sorted) {
-			return sorted, false
+			return sorted, fmt.Errorf("bundle cyclic detected") // todo: improve error message
 		}
 	}
-	return sorted, true
+	return sorted, nil
 }
 
 // visit

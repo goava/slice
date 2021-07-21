@@ -112,11 +112,11 @@ slice.Run(
 
 ### Running
 
-- Runs dispatchers
+- Run dispatchers
 
 ### Shutdown
 
-- Invokes `BeforeShutdown` bundle hooks.
+- Invokes `BeforeShutdown` bundle hooks in reverse order
 
 # Components
 
