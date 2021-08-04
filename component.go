@@ -22,3 +22,12 @@ func Supply(value di.Value, options ...di.ProvideOption) ComponentOption {
 		s.providers = append(s.providers, di.ProvideValue(value, options...))
 	})
 }
+
+// Group groups component options.
+func Group(options ...ComponentOption) ComponentOption {
+	return option(func(s *Application) {
+		for _, o := range options {
+			o.apply(s)
+		}
+	})
+}
